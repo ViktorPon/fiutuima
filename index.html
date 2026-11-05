@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050906">
+    <title>Володымыр Футуима</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #050906;
+            --panel: rgb(9 17 11 / 94%);
+            --panel-light: #0c160e;
+            --green: #39ff14;
+            --green-soft: #9cff8a;
+            --green-dim: #59a94f;
+            --line: rgb(57 255 20 / 19%);
+            --muted: #829681;
+            --mono: "Cascadia Code", "Consolas", "Courier New", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            position: relative;
+            isolation: isolate;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            background:
+                radial-gradient(ellipse at 50% 48%, rgb(45 255 20 / 5%), transparent 42%),
+                radial-gradient(ellipse at 82% 18%, rgb(28 110 35 / 24%), transparent 32%),
+                radial-gradient(ellipse at 9% 79%, rgb(25 102 44 / 20%), transparent 30%),
+                radial-gradient(ellipse at 96% 87%, rgb(57 255 20 / 8%), transparent 24%),
+                linear-gradient(118deg, transparent 20%, rgb(30 94 38 / 8%) 50%, transparent 76%),
+                linear-gradient(135deg, #050906 0%, #071009 52%, #040705 100%);
+            color: #d8f6d4;
+            font: 14px/1.6 var(--mono);
+        }
+
+        body::before,
+        body::after {
+            position: fixed;
+            z-index: -1;
+            inset: 0;
+            pointer-events: none;
+            content: "";
+        }
+
+        body::before {
+            background-image:
+                linear-gradient(rgb(87 255 91 / 5%) 1px, transparent 1px),
+                linear-gradient(90deg, rgb(87 255 91 / 5%) 1px, transparent 1px),
+                linear-gradient(rgb(87 255 91 / 2%) 1px, transparent 1px),
+                linear-gradient(90deg, rgb(87 255 91 / 2%) 1px, transparent 1px),
+                radial-gradient(circle, rgb(127 255 127 / 15%) 0.7px, transparent 1px);
+            background-size: 48px 48px, 48px 48px, 8px 8px, 8px 8px, 17px 17px;
+            mask-image: radial-gradient(ellipse at center, #000 12%, transparent 95%);
+        }
+
+        body::after {
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 3px,
+                rgb(0 0 0 / 13%) 4px
+            );
+            opacity: 0.28;
+        }
+
+        .password-gate {
+            position: fixed;
+            z-index: 30;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            background: rgb(3 7 4 / 94%);
+            backdrop-filter: blur(8px);
+        }
+
+        .password-gate[hidden] {
+            display: none;
+        }
+
+        .password-card {
+            width: min(390px, 100%);
+            padding: 1.5rem;
+            border: 1px solid rgb(57 255 20 / 42%);
+            border-radius: 12px;
+            background: linear-gradient(155deg, #0d180f, #070b08);
+            box-shadow: 0 0 36px rgb(57 255 20 / 12%);
+        }
+
+        .password-card h1 {
+            margin: 0 0 0.35rem;
+            color: var(--green-soft);
+            font-size: 1.15rem;
+        }
+
+        .password-card p {
+            margin: 0 0 1rem;
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        .password-card input {
+            width: 100%;
+            min-height: 42px;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            outline: none;
+            background: #050906;
+            color: #d8f6d4;
+            font: inherit;
+        }
+
+        .password-card input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgb(57 255 20 / 9%);
+        }
+
+        .password-card button {
+            width: 100%;
+            margin-top: 0.7rem;
+            padding: 0.65rem;
+            border: 1px solid rgb(57 255 20 / 55%);
+            border-radius: 7px;
+            background: rgb(57 255 20 / 9%);
+            color: var(--green-soft);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .password-error {
+            min-height: 1.3rem;
+            margin: 0.65rem 0 0 !important;
+            color: #ff7777 !important;
+        }
+
+        .code-backdrop {
+            position: fixed;
+            z-index: 0;
+            inset: 0;
+            overflow: hidden;
+            color: rgb(111 255 103 / 32%);
+            font-size: clamp(0.58rem, 0.9vw, 0.76rem);
+            line-height: 1.85;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .code-stream {
+            position: absolute;
+            margin: 0;
+            text-shadow: 0 0 12px rgb(57 255 20 / 30%);
+            white-space: pre;
+        }
+
+        .code-stream--left {
+            top: 7%;
+            left: 1.2%;
+            animation: code-drift 28s ease-in-out infinite alternate;
+        }
+
+        .code-stream--right {
+            top: 40%;
+            left: 1.2%;
+            animation: code-drift 32s ease-in-out infinite alternate-reverse;
+        }
+
+        .code-stream--bottom {
+            bottom: 2%;
+            left: 4%;
+            animation: code-drift 35s ease-in-out infinite alternate;
+        }
+
+        .code-stream--telemetry {
+            display: none;
+            top: 4%;
+            right: 3%;
+            color: rgb(156 255 138 / 38%);
+            font-size: 0.68rem;
+            line-height: 2;
+        }
+
+        .code-stream--packets {
+            top: 42%;
+            right: 2%;
+            color: rgb(156 255 138 / 36%);
+            font-size: 0.68rem;
+            line-height: 2;
+        }
+
+        @keyframes code-drift {
+            from { translate: 0 -7px; }
+            to { translate: 0 11px; }
+        }
+
+        .glitch-backdrop {
+            position: fixed;
+            z-index: 2;
+            right: 3vw;
+            bottom: 3vh;
+            display: grid;
+            place-items: center;
+            color: rgb(106 255 85 / 24%);
+            font-size: clamp(6rem, 13vw, 12rem);
+            font-weight: 700;
+            letter-spacing: -0.12em;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+            text-shadow: 0 0 38px rgb(57 255 20 / 24%);
+            mix-blend-mode: screen;
+        }
+
+        .glitch-backdrop::before,
+        .glitch-backdrop::after {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            content: "2-P";
+            opacity: 0.48;
+        }
+
+        .glitch-backdrop::before {
+            color: rgb(57 255 20 / 72%);
+            animation: glitch-shift 2.8s steps(1, end) infinite;
+        }
+
+        .glitch-backdrop::after {
+            color: rgb(105 255 170 / 62%);
+            animation: glitch-shift-reverse 2.3s steps(1, end) infinite;
+        }
+
+        @keyframes glitch-shift {
+            0%, 74%, 78%, 100% { clip-path: inset(0); transform: translate(0); }
+            75% { clip-path: inset(18% 0 68%); transform: translate(-12px, 3px); }
+            76% { clip-path: inset(58% 0 21%); transform: translate(10px, -3px); }
+            77% { clip-path: inset(78% 0 7%); transform: translate(-6px, 2px); }
+        }
+
+        @keyframes glitch-shift-reverse {
+            0%, 67%, 72%, 100% { clip-path: inset(0); transform: translate(0); }
+            68% { clip-path: inset(67% 0 14%); transform: translate(11px, -3px); }
+            70% { clip-path: inset(26% 0 58%); transform: translate(-9px, 3px); }
+            71% { clip-path: inset(8% 0 83%); transform: translate(6px, -2px); }
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            width: min(1200px, 100%);
+            min-height: 100vh;
+            grid-template-columns: 252px minmax(0, 1fr);
+            grid-template-rows: auto 1fr;
+            gap: 1rem 1.5rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .sidebar {
+            grid-column: 1;
+            grid-row: 1 / 3;
+            align-self: stretch;
+            padding: 1.2rem 0.9rem;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: linear-gradient(165deg, rgb(10 19 12 / 96%), rgb(5 10 7 / 94%));
+            box-shadow: inset 0 0 30px rgb(57 255 20 / 3%), 0 18px 60px rgb(0 0 0 / 35%);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.4rem 0.55rem 1.3rem;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .brand-mark {
+            display: grid;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border: 1px solid rgb(57 255 20 / 45%);
+            border-radius: 8px;
+            color: var(--green);
+            font-weight: 700;
+            text-shadow: 0 0 12px rgb(57 255 20 / 70%);
+            box-shadow: inset 0 0 14px rgb(57 255 20 / 10%), 0 0 15px rgb(57 255 20 / 8%);
+        }
+
+        .brand-name {
+            margin: 0;
+            color: #e2ffe0;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .brand-caption {
+            display: block;
+            color: var(--green-dim);
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+        }
+
+        .music-player {
+            position: fixed;
+            z-index: 5;
+            top: 1rem;
+            right: 1rem;
+            width: min(240px, calc(100vw - 2rem));
+            overflow: hidden;
+            border: 1px solid rgb(57 255 20 / 24%);
+            border-radius: 10px;
+            background: linear-gradient(155deg, #0d180f, #070b08);
+            box-shadow: inset 0 0 25px rgb(57 255 20 / 4%), 0 8px 26px rgb(0 0 0 / 24%);
+        }
+
+        .music-player-header {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .music-player-icon {
+            display: grid;
+            width: 26px;
+            height: 26px;
+            flex: 0 0 auto;
+            place-items: center;
+            border: 1px solid rgb(57 255 20 / 32%);
+            border-radius: 8px;
+            background: rgb(57 255 20 / 8%);
+            color: var(--green);
+        }
+
+        .music-player-heading {
+            min-width: 0;
+        }
+
+        .music-player-heading strong,
+        .music-player-track {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .music-player-heading strong {
+            color: #e2ffe0;
+            font-size: 0.72rem;
+        }
+
+        .music-player-track {
+            color: var(--muted);
+            font-size: 0.64rem;
+        }
+
+        .music-player iframe {
+            position: absolute;
+            top: 0;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .music-player-controls {
+            display: grid;
+            grid-template-columns: 32px 38px 32px;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            padding: 0.45rem 0.6rem 0.55rem;
+        }
+
+        .track-nav {
+            display: grid;
+            width: 32px;
+            height: 30px;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #0a110b;
+            color: var(--green-soft);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .track-play {
+            display: grid;
+            width: 38px;
+            height: 36px;
+            place-items: center;
+            border: 1px solid rgb(57 255 20 / 55%);
+            border-radius: 9px;
+            background: linear-gradient(145deg, rgb(57 255 20 / 18%), rgb(57 255 20 / 6%));
+            color: var(--green);
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 0 16px rgb(57 255 20 / 8%);
+        }
+
+        .track-nav:hover:not(:disabled),
+        .track-nav:focus-visible:not(:disabled),
+        .track-play:hover:not(:disabled),
+        .track-play:focus-visible:not(:disabled) {
+            outline: none;
+            border-color: var(--green);
+            background: rgb(57 255 20 / 9%);
+            color: var(--green);
+        }
+
+        .track-nav:disabled,
+        .track-play:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .music-progress {
+            display: grid;
+            grid-template-columns: 30px minmax(0, 1fr) 30px;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0 0.7rem 0.45rem;
+        }
+
+        .music-time {
+            min-width: 0;
+            color: var(--green-dim);
+            font-size: 0.58rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .music-time:last-child {
+            text-align: right;
+        }
+
+        .music-progress input[type="range"] {
+            width: 100%;
+            height: 4px;
+            min-height: 4px;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            outline: none;
+            background: linear-gradient(90deg, var(--green) 0%, #17351a 0%);
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .music-progress input[type="range"]::-webkit-slider-thumb {
+            width: 10px;
+            height: 10px;
+            border: 0;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgb(57 255 20 / 55%);
+            appearance: none;
+        }
+
+        .music-progress input[type="range"]::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            border: 0;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgb(57 255 20 / 55%);
+        }
+
+        .track-position {
+            display: block;
+            overflow: hidden;
+            padding: 0 0.7rem 0.5rem;
+            color: var(--muted);
+            font-size: 0.59rem;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .track-list {
+            margin: 0 0.6rem 0.55rem;
+            border-top: 1px solid var(--line);
+        }
+
+        .track-list summary {
+            padding: 0.45rem 0.1rem 0.3rem;
+            color: var(--green-soft);
+            font-size: 0.64rem;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .track-list summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .track-list summary::before {
+            margin-right: 0.4rem;
+            color: var(--green);
+            content: "▸";
+        }
+
+        .track-list[open] summary::before {
+            content: "▾";
+        }
+
+        .track-list-items {
+            display: grid;
+            max-height: 180px;
+            gap: 0.2rem;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0 0.15rem 0.25rem;
+            list-style: none;
+        }
+
+        .track-list-button {
+            width: 100%;
+            overflow: hidden;
+            padding: 0.4rem 0.45rem;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            background: transparent;
+            color: var(--muted);
+            font: inherit;
+            font-size: 0.62rem;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .track-list-button:hover,
+        .track-list-button:focus-visible {
+            outline: none;
+            border-color: var(--line);
+            color: var(--green-soft);
+        }
+
+        .track-list-button[aria-current="true"] {
+            background: rgb(57 255 20 / 8%);
+            color: var(--green);
+        }
+
+        .reaction-overlay {
+            position: fixed;
+            z-index: 20;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            background: rgb(0 0 0 / 82%);
+            backdrop-filter: blur(5px);
+        }
+
+        .reaction-overlay[hidden] {
+            display: none;
+        }
+
+        .reaction-dialog {
+            position: relative;
+            width: min(460px, 100%);
+            padding: 0.6rem;
+            border: 1px solid rgb(57 255 20 / 55%);
+            border-radius: 12px;
+            background: #080d09;
+            box-shadow: 0 0 35px rgb(57 255 20 / 16%);
+        }
+
+        .reaction-dialog img {
+            display: block;
+            width: 100%;
+            max-height: min(78vh, 620px);
+            border-radius: 7px;
+            object-fit: contain;
+        }
+
+        .reaction-audio-status {
+            margin: 0.4rem 0 0;
+            color: var(--muted);
+            font-size: 0.68rem;
+            text-align: center;
+        }
+
+        .reaction-close {
+            position: absolute;
+            top: 0.85rem;
+            right: 0.85rem;
+            display: grid;
+            width: 2rem;
+            height: 2rem;
+            place-items: center;
+            border: 1px solid rgb(57 255 20 / 55%);
+            border-radius: 50%;
+            background: #080d09;
+            color: var(--green);
+            font-size: 1.15rem;
+            cursor: pointer;
+        }
+
+        .menu-title {
+            margin: 1.4rem 0 0.6rem 0.6rem;
+            color: var(--muted);
+            font-size: 0.68rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+
+        .nav {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .nav-button {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0.7rem;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            background: transparent;
+            color: #a7b9a5;
+            text-align: left;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+        }
+
+        .nav-button:hover,
+        .nav-button:focus-visible {
+            outline: none;
+            border-color: var(--line);
+            background: rgb(57 255 20 / 6%);
+            color: #e4ffe1;
+        }
+
+        .nav-button[aria-current="page"] {
+            border-color: rgb(57 255 20 / 26%);
+            background: linear-gradient(90deg, rgb(57 255 20 / 12%), rgb(57 255 20 / 3%));
+            color: var(--green);
+            box-shadow: inset 2px 0 var(--green), 0 0 22px rgb(57 255 20 / 5%);
+        }
+
+        .nav-icon {
+            width: 1.5rem;
+            color: var(--green);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .side-status {
+            margin: 2rem 0.55rem 0;
+            padding-top: 0.9rem;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.72rem;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            margin-right: 0.45rem;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+        }
+
+        .content {
+            min-width: 0;
+            grid-column: 2;
+            grid-row: 2;
+            width: min(900px, 100%);
+            margin: 0 auto;
+            padding: clamp(1.3rem, 4vw, 2.7rem);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: linear-gradient(145deg, rgb(9 17 11 / 96%), rgb(6 11 8 / 96%));
+            box-shadow: inset 0 0 44px rgb(57 255 20 / 3%), 0 24px 80px rgb(0 0 0 / 44%);
+        }
+
+        .eyebrow {
+            margin: 0 0 0.7rem;
+            color: var(--green);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            color: #efffee;
+            font-size: clamp(1.7rem, 5vw, 2.5rem);
+            letter-spacing: -0.07em;
+            line-height: 1.2;
+        }
+
+        h1 span {
+            color: var(--green);
+            text-shadow: 0 0 22px rgb(57 255 20 / 35%);
+        }
+
+        .hint {
+            max-width: 620px;
+            margin: 0.8rem 0 1.7rem;
+            color: var(--muted);
+        }
+
+        .calculator[hidden] {
+            display: none;
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+
+        .triangle-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .triangle-column {
+            display: grid;
+            align-content: start;
+            gap: 0.8rem;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: rgb(5 10 6 / 55%);
+        }
+
+        .triangle-column h2 {
+            margin: 0;
+            color: var(--green);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .triangle-column .fields {
+            grid-template-columns: 1fr;
+        }
+
+        .array-output {
+            margin-top: 1.5rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--line);
+        }
+
+        .array-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-top: 1rem;
+        }
+
+        .array-option {
+            display: flex;
+            min-height: 42px;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: rgb(5 10 6 / 65%);
+            color: #b6cbb3;
+            cursor: pointer;
+        }
+
+        .array-option:has(input:checked) {
+            border-color: rgb(57 255 20 / 55%);
+            color: var(--green-soft);
+            background: rgb(57 255 20 / 7%);
+        }
+
+        .array-option input {
+            width: 16px;
+            min-height: 16px;
+            margin: 0;
+            accent-color: var(--green);
+        }
+
+        .array-limits {
+            margin-top: 0.9rem;
+        }
+
+        .array-limits[hidden] {
+            display: none;
+        }
+
+        .array-output[hidden],
+        .field-hidden[hidden] {
+            display: none;
+        }
+
+        .array-output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.7rem;
+        }
+
+        .array-output-header h2 {
+            margin: 0;
+            color: var(--green-soft);
+            font-size: 0.85rem;
+        }
+
+        .copy-button {
+            padding: 0.45rem 0.7rem;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            background: var(--panel-light);
+            color: var(--green-soft);
+            cursor: pointer;
+        }
+
+        .copy-button:hover,
+        .copy-button:focus-visible {
+            outline: none;
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        #array-code {
+            display: block;
+            overflow-x: auto;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #030604;
+            color: var(--green);
+            font: 0.82rem/1.7 var(--mono);
+            white-space: pre;
+        }
+
+        #copy-status {
+            min-height: 1.5em;
+            margin: 0.5rem 0 0;
+            color: var(--muted);
+            font-size: 0.72rem;
+        }
+
+        label {
+            display: grid;
+            gap: 0.4rem;
+            color: #b6cbb3;
+            font-size: 0.78rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 46px;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid rgb(91 171 81 / 30%);
+            border-radius: 6px;
+            outline: none;
+            background: #050a06;
+            color: var(--green-soft);
+            caret-color: var(--green);
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        input:hover,
+        select:hover {
+            border-color: rgb(91 255 71 / 55%);
+        }
+
+        input:focus-visible,
+        select:focus-visible {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgb(57 255 20 / 12%), 0 0 18px rgb(57 255 20 / 9%);
+        }
+
+        .calculate {
+            display: flex;
+            width: 100%;
+            min-height: 48px;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            margin-top: 1.2rem;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--green);
+            border-radius: 6px;
+            background: linear-gradient(100deg, #163d16, #102b12);
+            color: #c9ffc3;
+            font-weight: 700;
+            cursor: pointer;
+            text-shadow: 0 0 12px rgb(57 255 20 / 30%);
+            box-shadow: inset 0 0 20px rgb(57 255 20 / 6%), 0 0 18px rgb(57 255 20 / 6%);
+            transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        }
+
+        .calculate:hover {
+            background: linear-gradient(100deg, #1d541b, #17411a);
+            box-shadow: inset 0 0 20px rgb(57 255 20 / 12%), 0 0 24px rgb(57 255 20 / 15%);
+            transform: translateY(-1px);
+        }
+
+        .calculate:focus-visible {
+            outline: 2px solid var(--green-soft);
+            outline-offset: 3px;
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--line);
+        }
+
+        #results[hidden] {
+            display: none;
+        }
+
+        .result-card {
+            min-width: 0;
+            padding: 0.9rem;
+            border: 1px solid rgb(57 255 20 / 16%);
+            border-radius: 7px;
+            background: linear-gradient(145deg, rgb(25 64 27 / 26%), rgb(5 11 7 / 80%));
+        }
+
+        .result-label {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--muted);
+            font-size: 0.74rem;
+        }
+
+        .result-card output {
+            color: var(--green);
+            font-size: clamp(1.05rem, 4vw, 1.35rem);
+            overflow-wrap: anywhere;
+            text-shadow: 0 0 13px rgb(57 255 20 / 23%);
+        }
+
+        #error {
+            margin: 1rem 0 0;
+            color: #ff8585;
+            font-size: 0.8rem;
+        }
+
+        #error[hidden] {
+            display: none;
+        }
+
+        .formula {
+            margin: 1.3rem 0 0;
+            color: #71866f;
+            font-size: 0.72rem;
+        }
+
+        @media (max-width: 760px) {
+            .app {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: auto auto 1fr;
+                gap: 0.8rem;
+                padding: 0.8rem;
+            }
+
+            .sidebar {
+                grid-column: 1;
+                grid-row: 1;
+                min-width: 0;
+                padding: 0.4rem;
+            }
+
+            .brand {
+                padding-bottom: 0.7rem;
+            }
+
+            .menu-title,
+            .side-status {
+                display: none;
+            }
+
+            .music-player {
+                position: static;
+                grid-column: 1;
+                grid-row: 2;
+                justify-self: end;
+                width: min(240px, 100%);
+            }
+
+            .nav {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 0.1rem;
+            }
+
+            .nav-button {
+                width: auto;
+                flex: 0 0 auto;
+                padding: 0.55rem 0.7rem;
+                font-size: 0.76rem;
+            }
+
+            .nav-icon {
+                width: auto;
+            }
+
+            .content {
+                grid-column: 1;
+                grid-row: 3;
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .fields {
+                grid-template-columns: 1fr;
+            }
+
+            .triangle-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .glitch-backdrop {
+                right: 2vw;
+                bottom: 2vh;
+                font-size: clamp(5rem, 23vw, 8rem);
+            }
+
+            .code-stream--right,
+            .code-stream--packets {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="password-gate" id="password-gate" aria-labelledby="password-title">
+        <form class="password-card" id="password-form">
+            <h1 id="password-title">Доступ к сайту</h1>
+            <p>Введите пароль, чтобы продолжить.</p>
+            <label for="site-password">Пароль</label>
+            <input id="site-password" name="password" type="password" autocomplete="off" required autofocus>
+            <button type="submit">Войти</button>
+            <p class="password-error" id="password-error" role="alert" aria-live="assertive"></p>
+            <audio id="wrong-password-audio" src="assets/wrong-password.mp3" preload="auto"></audio>
+        </form>
+    </section>
+
+    <div class="code-backdrop" aria-hidden="true">
+        <pre class="code-stream code-stream--left">01  // ARRAY ENGINE
+02  for (let i = 0; i &lt; rows; i++) {
+03      arr[i] = [];
+04      for (let j = 0; j &lt; cols; j++) {
+05          arr[i][j] = 0;
+06      }
+07  }</pre>
+        <pre class="code-stream code-stream--right">0x2P  SYSTEM.LOG
+const matrix = (r, c) =&gt;
+  Array.from({ length: r }, () =&gt;
+    Array(c).fill(0)
+  );
+&gt; compile --fast
+&gt; status: READY_</pre>
+        <pre class="code-stream code-stream--bottom">while (system.online) {
+    render(grid);
+    calculate(area, perimeter);
+    await nextFrame();
+}</pre>
+        <pre class="code-stream code-stream--telemetry">NET / LIVE
+192.168.0.24:8080
+10.0.12.45:443
+172.16.4.2:3000
+MAC 00:1A:2B:3C:4D:5E
+PING 12ms  TTL 64
+RX  08:F3:2A:91
+TX  7C:10:AE:04</pre>
+        <pre class="code-stream code-stream--packets">[ PACKET TRACE ]
+10.0.0.8  -&gt; 192.168.0.24
+TCP  SYN  ACK  0x7F3A
+DNS  cache.hit  24ms
+ROUTE  02 - 04 - 08
+CRC32  8F14A2C0
+UPLINK  STABLE</pre>
+    </div>
+    <div class="glitch-backdrop" aria-hidden="true">2-P</div>
+    <div class="app">
+        <aside class="sidebar" aria-label="Навигация по калькуляторам">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">&gt;_</span>
+                <p class="brand-name">GEO<span style="color: var(--green)">TERM</span>
+                    <span class="brand-caption">GEOMETRY SYSTEM</span>
+                </p>
+            </div>
+            <p class="menu-title">Wybierz figurę</p>
+            <nav class="nav" aria-label="Калькуляторы фигур">
+                <button class="nav-button" type="button" data-shape="trapezoid" aria-current="page">
+                    <span class="nav-icon" aria-hidden="true">▱</span> Trapez
+                </button>
+                <button class="nav-button" type="button" data-shape="rectangle">
+                    <span class="nav-icon" aria-hidden="true">▭</span> Prostokąt
+                </button>
+                <button class="nav-button" type="button" data-shape="triangle">
+                    <span class="nav-icon" aria-hidden="true">△</span> Trójkąt
+                </button>
+                <button class="nav-button" type="button" data-shape="circle">
+                    <span class="nav-icon" aria-hidden="true">◯</span> Koło
+                </button>
+                <button class="nav-button" type="button" data-shape="similarity">
+                    <span class="nav-icon" aria-hidden="true">∼</span> Podobieństwo
+                </button>
+                <button class="nav-button" type="button" data-shape="arrays">
+                    <span class="nav-icon" aria-hidden="true">[ ]</span> Generator tablic
+                </button>
+            </nav>
+            <p class="side-status"><span class="status-dot"></span>SYSTEM ONLINE</p>
+        </aside>
+
+        <section class="music-player" aria-label="Плеер альбома BOOKER — Время колокольчиков">
+            <div class="music-player-header">
+                <span class="music-player-icon" aria-hidden="true">♫</span>
+                <div class="music-player-heading">
+                    <strong>BOOKER</strong>
+                    <span class="music-player-track" id="music-track-title">Время колокольчиков</span>
+                </div>
+            </div>
+            <iframe
+                id="soundcloud-frame"
+                title="Скрытый SoundCloud-плеер BOOKER — Время колокольчиков"
+                src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Frusyarapscene%2Fsets%2Fbooker-vremya-kolokolchikov&color=%2339ff14&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false"
+                loading="eager"
+                allow="autoplay"
+            ></iframe>
+            <div class="music-player-controls" aria-label="Переключение треков">
+                <button class="track-nav" id="track-previous" type="button" aria-label="Предыдущий трек" title="Предыдущий трек" disabled>‹</button>
+                <button class="track-play" id="track-play" type="button" aria-label="Воспроизвести" title="Воспроизвести" disabled>▶</button>
+                <button class="track-nav" id="track-next" type="button" aria-label="Следующий трек" title="Следующий трек" disabled>›</button>
+            </div>
+            <div class="music-progress">
+                <span class="music-time" id="music-current-time">0:00</span>
+                <input id="music-seek" type="range" min="0" max="100" value="0" aria-label="Позиция воспроизведения" disabled>
+                <span class="music-time" id="music-duration">0:00</span>
+            </div>
+            <span class="track-position" id="track-position" aria-live="polite">Загрузка треков…</span>
+            <details class="track-list" id="track-list">
+                <summary>Выбрать трек</summary>
+                <ol class="track-list-items" id="track-list-items">
+                </ol>
+            </details>
+        </section>
+
+        <main class="content">
+            <p class="eyebrow">[ GEOMETRY TERMINAL / CALC-026 ]</p>
+            <h1 id="page-title">Pole i obwód <span>trapezu</span></h1>
+            <p class="hint" id="page-hint">Podaj długości podstaw a i b, ramion c i d oraz wysokość h (w centymetrach).</p>
+
+            <form id="calculator-form">
+                <div class="calculator" data-calculator="trapezoid">
+                    <div class="fields">
+                        <label for="trap-a">Podstawa a (cm)
+                            <input id="trap-a" name="a" type="number" min="0.000001" step="any" required>
+                        </label>
+                        <label for="trap-b">Podstawa b (cm)
+                            <input id="trap-b" name="b" type="number" min="0.000001" step="any" required>
+                        </label>
+                        <label for="trap-c">Ramię c (cm)
+                            <input id="trap-c" name="c" type="number" min="0.000001" step="any" required>
+                        </label>
+                        <label for="trap-d">Ramię d (cm)
+                            <input id="trap-d" name="d" type="number" min="0.000001" step="any" required>
+                        </label>
+                        <label for="trap-h">Wysokość h (cm)
+                            <input id="trap-h" name="h" type="number" min="0.000001" step="any" required>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="rectangle" hidden>
+                    <div class="fields">
+                        <label for="rect-a">Długość a (cm)
+                            <input id="rect-a" name="a" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                        <label for="rect-b">Szerokość b (cm)
+                            <input id="rect-b" name="b" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="triangle" hidden>
+                    <div class="fields">
+                        <label for="triangle-a">Podstawa a (cm)
+                            <input id="triangle-a" name="a" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                        <label for="triangle-b">Bok b (cm)
+                            <input id="triangle-b" name="b" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                        <label for="triangle-c">Bok c (cm)
+                            <input id="triangle-c" name="c" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                        <label for="triangle-h">Wysokość h (cm)
+                            <input id="triangle-h" name="h" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="circle" hidden>
+                    <div class="fields">
+                        <label for="circle-r">Promień r (cm)
+                            <input id="circle-r" name="r" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="similarity" hidden>
+                    <div class="triangle-columns">
+                        <section class="triangle-column" aria-labelledby="triangle1-heading">
+                            <h2 id="triangle1-heading">Trójkąt 1</h2>
+                            <div class="fields">
+                                <label for="triangle1-a">Bok a (cm)
+                                    <input id="triangle1-a" name="a1" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                                <label for="triangle1-b">Bok b (cm)
+                                    <input id="triangle1-b" name="b1" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                                <label for="triangle1-c">Bok c (cm)
+                                    <input id="triangle1-c" name="c1" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                            </div>
+                        </section>
+                        <section class="triangle-column" aria-labelledby="triangle2-heading">
+                            <h2 id="triangle2-heading">Trójkąt 2</h2>
+                            <div class="fields">
+                                <label for="triangle2-a">Bok a (cm)
+                                    <input id="triangle2-a" name="a2" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                                <label for="triangle2-b">Bok b (cm)
+                                    <input id="triangle2-b" name="b2" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                                <label for="triangle2-c">Bok c (cm)
+                                    <input id="triangle2-c" name="c2" type="number" min="0.000001" step="any" required disabled>
+                                </label>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="arrays" hidden>
+                    <div class="fields">
+                        <label for="array-language">Język programowania
+                            <select id="array-language" name="language" required disabled>
+                                <option value="javascript">JavaScript</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C++</option>
+                            </select>
+                        </label>
+                        <label for="array-dimension">Typ tablicy
+                            <select id="array-dimension" name="dimension" required disabled>
+                                <option value="1">Jednowymiarowa (1D)</option>
+                                <option value="2">Dwuwymiarowa (2D)</option>
+                            </select>
+                        </label>
+                        <label for="array-rows">Liczba elementów / wierszy
+                            <input id="array-rows" name="rows" type="number" min="1" max="1000" step="1" value="10" required disabled>
+                        </label>
+                        <label class="field-hidden" id="array-columns-field" for="array-columns" hidden>Liczba kolumn
+                            <input id="array-columns" name="columns" type="number" min="1" max="1000" step="1" value="5" required disabled>
+                        </label>
+                    </div>
+                    <div class="array-options">
+                        <label class="array-option" for="array-random">
+                            <input id="array-random" type="checkbox" disabled>
+                            Losowe wypełnienie
+                        </label>
+                        <label class="array-option" for="array-print">
+                            <input id="array-print" type="checkbox" disabled>
+                            Dodaj pętlę wypisywania
+                        </label>
+                    </div>
+                    <div class="fields array-limits" id="array-limits" hidden>
+                        <label for="array-min">Losowe wartości od
+                            <input id="array-min" type="number" min="-1000000" max="1000000" step="1" value="1" required disabled>
+                        </label>
+                        <label for="array-max">Losowe wartości do
+                            <input id="array-max" type="number" min="-1000000" max="1000000" step="1" value="5" required disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="calculate" type="submit">[ OBLICZ WYNIKI ]</button>
+            </form>
+
+            <p id="error" role="alert" hidden></p>
+            <section id="array-output" class="array-output" aria-live="polite" hidden>
+                <div class="array-output-header">
+                    <h2 id="array-code-title">GOTOWY KOD JAVASCRIPT</h2>
+                    <button id="copy-code" class="copy-button" type="button">Kopiuj kod</button>
+                </div>
+                <pre><code id="array-code"></code></pre>
+                <p id="copy-status" role="status"></p>
+            </section>
+            <section id="results" aria-live="polite" hidden>
+                <div class="result-card">
+                    <span class="result-label" id="area-label">Pole</span>
+                    <output id="area"></output>
+                </div>
+                <div class="result-card">
+                    <span class="result-label" id="perimeter-label">Obwód</span>
+                    <output id="perimeter"></output>
+                </div>
+            </section>
+            <p class="formula" id="formula">WZÓR: P = (a + b) × h / 2 &nbsp;|&nbsp; OBW = a + b + c + d</p>
+        </main>
+    </div>
+
+    <div class="reaction-overlay" id="reaction-overlay" role="dialog" aria-modal="true" aria-label="Реакция на текст в числовом поле" hidden>
+        <div class="reaction-dialog">
+            <button class="reaction-close" id="reaction-close" type="button" aria-label="Закрыть">×</button>
+            <img src="assets/numeric-input-reaction.png" alt="Мемная реакция на текст вместо числа">
+            <audio id="reaction-audio" src="assets/numeric-input-reaction.mp3" preload="auto"></audio>
+            <p class="reaction-audio-status" id="reaction-audio-status" role="status" hidden></p>
+        </div>
+    </div>
+
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+    <script>
+        const soundcloudFrame = document.querySelector("#soundcloud-frame");
+        const trackTitle = document.querySelector("#music-track-title");
+        const trackPosition = document.querySelector("#track-position");
+        const previousTrackButton = document.querySelector("#track-previous");
+        const nextTrackButton = document.querySelector("#track-next");
+        const playButton = document.querySelector("#track-play");
+        const seekBar = document.querySelector("#music-seek");
+        const currentTimeLabel = document.querySelector("#music-current-time");
+        const durationLabel = document.querySelector("#music-duration");
+        const trackList = document.querySelector("#track-list-items");
+        const reactionAudio = document.querySelector("#reaction-audio");
+        const reactionAudioStatus = document.querySelector("#reaction-audio-status");
+        const playlistTitles = [
+            "BOOKER - Дом летающих кинжалов",
+            "BOOKER - Хотеть",
+            "BOOKER - Подняться",
+            "BOOKER - За моих братьев и сестёр",
+            "BOOKER x Лёха Никонов - В скольких я попал?",
+            "BOOKER - ДЖАНК",
+            "BOOKER - Полюбить",
+            "BOOKER x маломира - Сердце",
+            "BOOKER - Удержи меня",
+            "BOOKER - Транки",
+            "BOOKER - Время колокольчиков",
+            "BOOKER - Пора завязывать"
+        ];
+
+        function formatMusicTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+        }
+
+        function renderTrackList(count = playlistTitles.length, onSelect = null) {
+            trackList.replaceChildren();
+            playlistTitles.slice(0, count).forEach((title, index) => {
+                const item = document.createElement("li");
+                const button = document.createElement("button");
+                button.className = "track-list-button";
+                button.type = "button";
+                button.textContent = `${index + 1}. ${title}`;
+                button.title = button.textContent;
+                button.disabled = !onSelect;
+                if (onSelect) {
+                    button.addEventListener("click", () => onSelect(index));
+                }
+                item.append(button);
+                trackList.append(item);
+            });
+        }
+
+        renderTrackList();
+
+        if (window.SC && soundcloudFrame) {
+            const soundcloudWidget = window.SC.Widget(soundcloudFrame);
+            let trackCount = 0;
+            let trackDuration = 0;
+
+            function getSoundTitle(sound, index) {
+                if (playlistTitles[index]) {
+                    return playlistTitles[index];
+                }
+
+                const title = sound.title || sound.track?.title || sound.metadata?.title;
+                if (typeof title === "string" && title.trim()) {
+                    return title.trim();
+                }
+
+                const permalink = sound.permalink_url || sound.track?.permalink_url;
+                if (typeof permalink === "string") {
+                    const slug = permalink.split(/[?#]/, 1)[0].split("/").filter(Boolean).pop();
+                    if (slug) {
+                        return slug.replace(/[-_]+/g, " ");
+                    }
+                }
+
+                return "Название недоступно";
+            }
+
+            function renderLoadedTrackList(count) {
+                renderTrackList(count, (index) => {
+                    soundcloudWidget.skip(index);
+                    soundcloudWidget.play();
+                });
+            }
+
+            function markCurrentTrack(index) {
+                trackList.querySelectorAll(".track-list-button").forEach((button, buttonIndex) => {
+                    if (buttonIndex === index) {
+                        button.setAttribute("aria-current", "true");
+                    } else {
+                        button.removeAttribute("aria-current");
+                    }
+                });
+            }
+
+            function updatePlayButton(isPlaying) {
+                playButton.textContent = isPlaying ? "Ⅱ" : "▶";
+                playButton.setAttribute("aria-label", isPlaying ? "Pauza" : "Odtwórz");
+                playButton.title = isPlaying ? "Pauza" : "Odtwórz";
+            }
+
+            function updateTrackInfo() {
+                soundcloudWidget.getCurrentSound((sound) => {
+                    if (sound) {
+                        soundcloudWidget.getCurrentSoundIndex((index) => {
+                            if (Number.isInteger(index) && trackCount > 0) {
+                                const title = getSoundTitle(sound, index);
+                                trackTitle.textContent = title;
+                                trackTitle.title = title;
+                                const currentButton = trackList.querySelectorAll(".track-list-button")[index];
+                                if (currentButton) {
+                                    currentButton.textContent = `${index + 1}. ${title}`;
+                                    currentButton.title = currentButton.textContent;
+                                }
+                                markCurrentTrack(index);
+                                trackPosition.textContent = `${index + 1} / ${trackCount} · ${title}`;
+                            }
+                        });
+                    }
+                });
+                soundcloudWidget.getDuration((duration) => {
+                    trackDuration = duration;
+                    seekBar.max = String(duration || 0);
+                    seekBar.value = "0";
+                    seekBar.disabled = !duration;
+                    currentTimeLabel.textContent = "0:00";
+                    durationLabel.textContent = formatMusicTime(duration || 0);
+                    seekBar.style.background = "linear-gradient(90deg, var(--green) 0%, #17351a 0%)";
+                });
+            }
+
+            soundcloudWidget.bind(window.SC.Widget.Events.READY, () => {
+                soundcloudWidget.getSounds((sounds) => {
+                    trackCount = sounds.length;
+                    if (trackCount > 0) {
+                        renderLoadedTrackList(trackCount);
+                        previousTrackButton.disabled = false;
+                        nextTrackButton.disabled = trackCount < 2;
+                        playButton.disabled = false;
+                        trackPosition.textContent = `${trackCount} треков · SoundCloud`;
+                        updateTrackInfo();
+                    } else {
+                        trackPosition.textContent = "Плейлист пуст";
+                    }
+                });
+            });
+
+            soundcloudWidget.bind(window.SC.Widget.Events.PLAY, () => {
+                updatePlayButton(true);
+                updateTrackInfo();
+            });
+            soundcloudWidget.bind(window.SC.Widget.Events.PAUSE, () => updatePlayButton(false));
+            soundcloudWidget.bind(window.SC.Widget.Events.PLAY_PROGRESS, (progress) => {
+                const position = progress.currentPosition;
+                const duration = progress.duration || trackDuration;
+                seekBar.value = String(position);
+                currentTimeLabel.textContent = formatMusicTime(position);
+                durationLabel.textContent = formatMusicTime(duration);
+                const percentage = duration ? (position / duration) * 100 : 0;
+                seekBar.style.background = `linear-gradient(90deg, var(--green) ${percentage}%, #17351a ${percentage}%)`;
+            });
+            soundcloudWidget.bind(window.SC.Widget.Events.FINISH, () => soundcloudWidget.next());
+            previousTrackButton.addEventListener("click", () => soundcloudWidget.prev());
+            nextTrackButton.addEventListener("click", () => soundcloudWidget.next());
+            playButton.addEventListener("click", () => {
+                soundcloudWidget.isPaused((isPaused) => {
+                    if (isPaused) {
+                        soundcloudWidget.play();
+                    } else {
+                        soundcloudWidget.pause();
+                    }
+                });
+            });
+            seekBar.addEventListener("input", () => soundcloudWidget.seekTo(Number(seekBar.value)));
+        } else {
+            trackPosition.textContent = "Переключение недоступно";
+        }
+
+        const form = document.querySelector("#calculator-form");
+        const navButtons = document.querySelectorAll(".nav-button");
+        const calculators = document.querySelectorAll(".calculator");
+        const results = document.querySelector("#results");
+        const error = document.querySelector("#error");
+        const areaOutput = document.querySelector("#area");
+        const perimeterOutput = document.querySelector("#perimeter");
+        const areaLabel = document.querySelector("#area-label");
+        const title = document.querySelector("#page-title");
+        const hint = document.querySelector("#page-hint");
+        const formula = document.querySelector("#formula");
+        const perimeterLabel = document.querySelector("#perimeter-label");
+        const arrayOutput = document.querySelector("#array-output");
+        const arrayLanguage = document.querySelector("#array-language");
+        const arrayDimension = document.querySelector("#array-dimension");
+        const arrayRows = document.querySelector("#array-rows");
+        const arrayColumnsField = document.querySelector("#array-columns-field");
+        const arrayColumns = document.querySelector("#array-columns");
+        const arrayRandom = document.querySelector("#array-random");
+        const arrayPrint = document.querySelector("#array-print");
+        const arrayLimits = document.querySelector("#array-limits");
+        const arrayMin = document.querySelector("#array-min");
+        const arrayMax = document.querySelector("#array-max");
+        const arrayCode = document.querySelector("#array-code");
+        const arrayCodeTitle = document.querySelector("#array-code-title");
+        const copyCodeButton = document.querySelector("#copy-code");
+        const copyStatus = document.querySelector("#copy-status");
+        const reactionOverlay = document.querySelector("#reaction-overlay");
+        const reactionCloseButton = document.querySelector("#reaction-close");
+        const passwordGate = document.querySelector("#password-gate");
+        const passwordForm = document.querySelector("#password-form");
+        const passwordInput = document.querySelector("#site-password");
+        const passwordError = document.querySelector("#password-error");
+        const wrongPasswordAudio = document.querySelector("#wrong-password-audio");
+        const format = new Intl.NumberFormat("pl-PL", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        const languageNames = {
+            javascript: "JAVASCRIPT",
+            java: "JAVA",
+            cpp: "C++"
+        };
+
+        passwordForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (passwordInput.value === "Futuima") {
+                passwordGate.hidden = true;
+                passwordError.textContent = "";
+                return;
+            }
+
+            passwordError.textContent = "Неверный пароль.";
+            wrongPasswordAudio.currentTime = 0;
+            wrongPasswordAudio.play().catch(() => {
+                passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
+            });
+            passwordInput.select();
+        });
+
+        let lastNumericField = null;
+
+        function showNumericInputReaction() {
+            if (!reactionOverlay.hidden) {
+                return;
+            }
+            lastNumericField = document.activeElement;
+            reactionOverlay.hidden = false;
+            reactionCloseButton.focus();
+            reactionAudioStatus.hidden = true;
+            reactionAudio.currentTime = 0;
+            reactionAudio.play().catch(() => {
+                if (!reactionOverlay.hidden) {
+                    reactionAudioStatus.textContent = "Не удалось воспроизвести звук.";
+                    reactionAudioStatus.hidden = false;
+                }
+            });
+        }
+
+        function closeNumericInputReaction() {
+            reactionOverlay.hidden = true;
+            reactionAudio.pause();
+            reactionAudio.currentTime = 0;
+            if (lastNumericField instanceof HTMLElement) {
+                lastNumericField.focus();
+            }
+        }
+
+        function confirmNumericInputReaction() {
+            if (reactionOverlay.hidden &&
+                window.confirm("Ты уверен, что хочешь ввести текст вместо числа?")) {
+                showNumericInputReaction();
+            }
+        }
+
+        form.addEventListener("keydown", (event) => {
+            if (event.target instanceof HTMLInputElement &&
+                event.target.type === "number" &&
+                event.key.length === 1 &&
+                /[^0-9.,+\-eE]/u.test(event.key)) {
+                event.preventDefault();
+                confirmNumericInputReaction();
+            }
+        });
+
+        form.addEventListener("beforeinput", (event) => {
+            if (event.target instanceof HTMLInputElement &&
+                event.target.type === "number" &&
+                event.data &&
+                /[^0-9.,+\-eE]/u.test(event.data)) {
+                event.preventDefault();
+                confirmNumericInputReaction();
+            }
+        });
+
+        form.addEventListener("paste", (event) => {
+            if (event.target instanceof HTMLInputElement &&
+                event.target.type === "number" &&
+                /[^0-9.,+\-eE]/u.test(event.clipboardData.getData("text"))) {
+                event.preventDefault();
+                confirmNumericInputReaction();
+            }
+        });
+
+        reactionCloseButton.addEventListener("click", closeNumericInputReaction);
+        reactionOverlay.addEventListener("click", (event) => {
+            if (event.target === reactionOverlay) {
+                closeNumericInputReaction();
+            }
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !reactionOverlay.hidden) {
+                closeNumericInputReaction();
+            }
+        });
+
+        const shapes = {
+            trapezoid: {
+                title: 'Pole i obwód <span>trapezu</span>',
+                hint: "Podaj długości podstaw a i b, ramion c i d oraz wysokość h (w centymetrach).",
+                formula: "WZÓR: P = (a + b) × h / 2  |  OBW = a + b + c + d",
+                areaLabel: "Pole",
+                perimeterLabel: "Obwód",
+                calculate: ({ a, b, c, d, h }) => ({
+                    area: ((a + b) * h) / 2,
+                    perimeter: a + b + c + d
+                })
+            },
+            rectangle: {
+                title: 'Pole i obwód <span>prostokąta</span>',
+                hint: "Podaj długość a i szerokość b prostokąta (w centymetrach).",
+                formula: "WZÓR: P = a × b  |  OBW = 2 × (a + b)",
+                areaLabel: "Pole",
+                perimeterLabel: "Obwód",
+                calculate: ({ a, b }) => ({
+                    area: a * b,
+                    perimeter: 2 * (a + b)
+                })
+            },
+            triangle: {
+                title: 'Pole i obwód <span>trójkąta</span>',
+                hint: "Podaj podstawę a, wysokość h oraz długości boków b i c (w centymetrach).",
+                formula: "WZÓR: P = a × h / 2  |  OBW = a + b + c",
+                areaLabel: "Pole",
+                perimeterLabel: "Obwód",
+                calculate: ({ a, b, c, h }) => ({
+                    area: (a * h) / 2,
+                    perimeter: a + b + c
+                })
+            },
+            circle: {
+                title: 'Pole i obwód <span>koła</span>',
+                hint: "Podaj promień r koła (w centymetrach). Wynik używa liczby π.",
+                formula: "WZÓR: P = π × r²  |  OBW = 2 × π × r",
+                areaLabel: "Pole",
+                perimeterLabel: "Obwód koła",
+                calculate: ({ r }) => ({
+                    area: Math.PI * r ** 2,
+                    perimeter: 2 * Math.PI * r
+                })
+            },
+            similarity: {
+                title: 'Test <span>podobieństwa</span>',
+                hint: "Wpisz długości trzech boków obu trójkątów. Kolejność wpisywania boków nie ma znaczenia.",
+                formula: "WARUNEK: stosunki najmniejszych, środkowych i największych boków są równe",
+                areaLabel: "Wynik",
+                perimeterLabel: "Stosunek boków",
+                calculate: () => null
+            },
+            arrays: {
+                title: 'Generator <span>tablic</span>',
+                hint: "Wybierz język, wymiar i rozmiar tablicy, a generator przygotuje gotowy kod z pętlą.",
+                formula: "JAVASCRIPT / JAVA / C++  |  PĘTLE for",
+                areaLabel: "Wynik",
+                perimeterLabel: "Kod",
+                calculate: () => null
+            }
+        };
+
+        let currentShape = "trapezoid";
+
+        function selectShape(shape) {
+            currentShape = shape;
+            const config = shapes[shape];
+
+            navButtons.forEach((button) => {
+                if (button.dataset.shape === shape) {
+                    button.setAttribute("aria-current", "page");
+                } else {
+                    button.removeAttribute("aria-current");
+                }
+            });
+
+            calculators.forEach((calculator) => {
+                const isActive = calculator.dataset.calculator === shape;
+                calculator.hidden = !isActive;
+                calculator.querySelectorAll("input, select").forEach((control) => {
+                    control.disabled = !isActive;
+                });
+            });
+
+            title.innerHTML = config.title;
+            hint.textContent = config.hint;
+            formula.textContent = config.formula;
+            areaLabel.textContent = config.areaLabel;
+            perimeterLabel.textContent = config.perimeterLabel;
+            results.hidden = true;
+            arrayOutput.hidden = true;
+            error.hidden = true;
+            copyStatus.textContent = "";
+            updateArrayDimensionFields();
+        }
+
+        function updateArrayDimensionFields() {
+            const isTwoDimensional = arrayDimension.value === "2";
+            arrayColumnsField.hidden = !isTwoDimensional;
+            arrayColumns.disabled = !isTwoDimensional || currentShape !== "arrays";
+            arrayColumns.required = isTwoDimensional;
+            arrayLimits.hidden = !arrayRandom.checked;
+            arrayMin.disabled = !arrayRandom.checked || currentShape !== "arrays";
+            arrayMax.disabled = !arrayRandom.checked || currentShape !== "arrays";
+            arrayMin.required = arrayRandom.checked;
+            arrayMax.required = arrayRandom.checked;
+        }
+
+        navButtons.forEach((button) => {
+            button.addEventListener("click", () => selectShape(button.dataset.shape));
+        });
+
+        arrayDimension.addEventListener("change", updateArrayDimensionFields);
+        arrayRandom.addEventListener("change", updateArrayDimensionFields);
+        updateArrayDimensionFields();
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            error.hidden = true;
+
+            const activeCalculator = document.querySelector(`[data-calculator="${currentShape}"]`);
+            if (currentShape === "arrays") {
+                const length = Number(arrayRows.value);
+                const columns = Number(arrayColumns.value);
+                const isTwoDimensional = arrayDimension.value === "2";
+                const language = arrayLanguage.value;
+                const randomFill = arrayRandom.checked;
+                const includePrintLoop = arrayPrint.checked;
+                const minValue = Number(arrayMin.value);
+                const maxValue = Number(arrayMax.value);
+
+                if (!Number.isInteger(length) || length < 1 || length > 1000 ||
+                    (isTwoDimensional && (!Number.isInteger(columns) || columns < 1 || columns > 1000))) {
+                    error.textContent = "Podaj całkowite rozmiary tablic od 1 do 1000.";
+                    error.hidden = false;
+                    arrayOutput.hidden = true;
+                    return;
+                }
+
+                if (randomFill && (
+                    !Number.isInteger(minValue) || !Number.isInteger(maxValue) ||
+                    minValue < -1000000 || maxValue > 1000000 || minValue > maxValue
+                )) {
+                    error.textContent = "Podaj całkowite granice losowania od -1000000 do 1000000; wartość „od” nie może być większa niż „do”.";
+                    error.hidden = false;
+                    arrayOutput.hidden = true;
+                    return;
+                }
+
+                const declaration = {
+                    javascript: isTwoDimensional ? "const arr = [];" : "const arr = [];",
+                    java: isTwoDimensional
+                        ? `int[][] arr = new int[${length}][${columns}];`
+                        : `int[] arr = new int[${length}];`,
+                    cpp: isTwoDimensional
+                        ? `int arr[${length}][${columns}];`
+                        : `int arr[${length}];`
+                }[language];
+                const valueExpression = randomFill
+                    ? {
+                        javascript: `Math.floor(Math.random() * (${maxValue} - ${minValue} + 1)) + ${minValue}`,
+                        java: `(int) (Math.random() * (${maxValue} - ${minValue} + 1)) + ${minValue}`,
+                        cpp: `rand() % (${maxValue} - ${minValue} + 1) + ${minValue}`
+                    }[language]
+                    : "0";
+                const rowLength = language === "java" ? "arr.length" : length;
+                const columnLength = language === "java" ? "arr[i].length" : columns;
+                const rowIndex = language === "javascript" ? "let i" : "int i";
+                const columnIndex = language === "javascript" ? "let j" : "int j";
+                const assignment = isTwoDimensional
+                    ? `arr[i][j] = ${valueExpression};`
+                    : `arr[i] = ${valueExpression};`;
+                const initialize = isTwoDimensional
+                    ? `for (${rowIndex} = 0; i < ${rowLength}; i++) {\n    for (${columnIndex} = 0; j < ${columnLength}; j++) {\n        ${assignment}\n    }\n}`
+                    : `for (${rowIndex} = 0; i < ${rowLength}; i++) {\n    ${assignment}\n}`;
+                const printLoop = isTwoDimensional
+                    ? {
+                        javascript: `for (let i = 0; i < arr.length; i++) {\n    console.log(arr[i].join(" "));\n}`,
+                        java: `for (int i = 0; i < arr.length; i++) {\n    System.out.println(java.util.Arrays.toString(arr[i]));\n}`,
+                        cpp: `for (int i = 0; i < ${length}; i++) {\n    for (int j = 0; j < ${columns}; j++) {\n        std::cout << arr[i][j] << ' ';\n    }\n    std::cout << '\\n';\n}`
+                    }[language]
+                    : {
+                        javascript: `for (let i = 0; i < arr.length; i++) {\n    console.log(arr[i]);\n}`,
+                        java: `for (int i = 0; i < arr.length; i++) {\n    System.out.println(arr[i]);\n}`,
+                        cpp: `for (int i = 0; i < ${length}; i++) {\n    std::cout << arr[i] << '\\n';\n}`
+                    }[language];
+                const headers = language === "cpp"
+                    ? [
+                        ...(randomFill ? ["#include <cstdlib>"] : []),
+                        ...(includePrintLoop ? ["#include <iostream>"] : [])
+                    ].join("\n")
+                    : "";
+                const code = [headers, declaration, initialize, ...(includePrintLoop ? ["", printLoop] : [])]
+                    .filter(Boolean)
+                    .join("\n");
+                arrayCodeTitle.textContent = `GOTOWY KOD ${languageNames[language]}`;
+                arrayCode.textContent = code;
+                arrayOutput.hidden = false;
+                copyStatus.textContent = "";
+                results.hidden = true;
+                return;
+            }
+
+            const dimensions = Object.fromEntries(
+                Array.from(activeCalculator.querySelectorAll("input"), (input) => [
+                    input.name,
+                    Number(input.value)
+                ])
+            );
+
+            if (Object.values(dimensions).some((value) => !Number.isFinite(value) || value <= 0)) {
+                error.textContent = "Wprowadź poprawne liczby większe od zera.";
+                error.hidden = false;
+                results.hidden = true;
+                return;
+            }
+
+            if (currentShape === "similarity") {
+                const first = [dimensions.a1, dimensions.b1, dimensions.c1].sort((a, b) => a - b);
+                const second = [dimensions.a2, dimensions.b2, dimensions.c2].sort((a, b) => a - b);
+                const isTriangle = ([a, b, c]) => a + b > c && a + c > b && b + c > a;
+
+                if (!isTriangle(first) || !isTriangle(second)) {
+                    error.textContent = "Podane boki muszą tworzyć dwa poprawne trójkąty.";
+                    error.hidden = false;
+                    results.hidden = true;
+                    return;
+                }
+
+                const ratios = second.map((side, index) => side / first[index]);
+                const scale = Math.max(1, ...ratios.map(Math.abs));
+                const isSimilar = ratios.every((ratio) => Math.abs(ratio - ratios[0]) <= 1e-9 * scale);
+
+                areaOutput.textContent = isSimilar ? "PODOBNE" : "NIEPODOBNE";
+                perimeterOutput.textContent = isSimilar
+                    ? `k = ${format.format(ratios[0])}`
+                    : `min: ${format.format(ratios[0])} · śr: ${format.format(ratios[1])} · max: ${format.format(ratios[2])}`;
+                results.hidden = false;
+                return;
+            }
+
+            const answer = shapes[currentShape].calculate(dimensions);
+            if (Object.values(answer).some((value) => !Number.isFinite(value))) {
+                error.textContent = "Wynik jest poza zakresem. Zmniejsz podane wartości.";
+                error.hidden = false;
+                results.hidden = true;
+                return;
+            }
+
+            areaOutput.textContent = `${format.format(answer.area)} cm²`;
+            perimeterOutput.textContent = `${format.format(answer.perimeter)} cm`;
+            results.hidden = false;
+        });
+
+        copyCodeButton.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(arrayCode.textContent);
+                copyStatus.textContent = "Kod skopiowany do schowka.";
+            } catch (copyError) {
+                copyStatus.textContent = "Nie udało się skopiować kodu. Zaznacz go i skopiuj ręcznie.";
+            }
+        });
+    </script>
+</body>
+</html>
