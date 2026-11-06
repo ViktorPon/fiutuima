@@ -1340,6 +1340,7 @@ UPLINK  STABLE</pre>
                 <button class="calculate" type="submit">[ OBLICZ WYNIKI ]</button>
             </form>
 
+            <audio id="array-generation-audio" src="assets/musor-drop_jkwCGrE.mp3" preload="auto"></audio>
             <p id="error" role="alert" hidden></p>
             <section id="array-output" class="array-output" aria-live="polite" hidden>
                 <div class="array-output-header">
@@ -1579,6 +1580,7 @@ UPLINK  STABLE</pre>
         const arrayCodeTitle = document.querySelector("#array-code-title");
         const copyCodeButton = document.querySelector("#copy-code");
         const copyStatus = document.querySelector("#copy-status");
+        const arrayGenerationAudio = document.querySelector("#array-generation-audio");
         const reactionOverlay = document.querySelector("#reaction-overlay");
         const reactionCloseButton = document.querySelector("#reaction-close");
         const passwordGate = document.querySelector("#password-gate");
@@ -1932,6 +1934,11 @@ UPLINK  STABLE</pre>
                 arrayOutput.hidden = false;
                 copyStatus.textContent = "";
                 results.hidden = true;
+                arrayGenerationAudio.currentTime = 0;
+                arrayGenerationAudio.play().catch(() => {
+                    error.textContent = "Не удалось воспроизвести звук генератора массива.";
+                    error.hidden = false;
+                });
                 return;
             }
 
