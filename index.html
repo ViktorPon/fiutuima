@@ -1927,7 +1927,7 @@ UPLINK  STABLE</pre>
             textarea.addEventListener("beforeinput", (event) => {
                 if (event.data && listNumberCharacterPattern.test(event.data)) {
                     event.preventDefault();
-                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                    confirmNumericInputReaction();
                 }
             });
 
@@ -1935,7 +1935,7 @@ UPLINK  STABLE</pre>
                 const pastedText = event.clipboardData.getData("text");
                 if (listNumberCharacterPattern.test(pastedText)) {
                     event.preventDefault();
-                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                    confirmNumericInputReaction();
                 }
             });
 
@@ -1943,7 +1943,7 @@ UPLINK  STABLE</pre>
                 const droppedText = event.dataTransfer.getData("text");
                 if (listNumberCharacterPattern.test(droppedText)) {
                     event.preventDefault();
-                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                    confirmNumericInputReaction();
                 }
             });
         });
