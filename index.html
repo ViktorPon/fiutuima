@@ -1586,6 +1586,14 @@ UPLINK  STABLE</pre>
         const passwordInput = document.querySelector("#site-password");
         const passwordError = document.querySelector("#password-error");
         const wrongPasswordAudio = document.querySelector("#wrong-password-audio");
+        const failedPasswordAttemptKey = "fiutuima-failed-password-attempts";
+        const randomWrongPasswordSounds = [
+            "assets/musor-drop_jkwCGrE.mp3",
+            "assets/distorted-trumpets-hl2.mp3",
+            "assets/00000000000000000.mp3",
+            "assets/skyrim-npc-music-harvest-dawn.mp3"
+        ];
+        let failedPasswordAttempts = 0;
         const format = new Intl.NumberFormat("pl-PL", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -1596,6 +1604,26 @@ UPLINK  STABLE</pre>
             cpp: "C++"
         };
 
+        function getFailedPasswordAttempts() {
+            try {
+                return Math.max(
+                    failedPasswordAttempts,
+                    Number.parseInt(localStorage.getItem(failedPasswordAttemptKey) || "0", 10) || 0
+                );
+            } catch {
+                return failedPasswordAttempts;
+            }
+        }
+
+        function saveFailedPasswordAttempts(attempts) {
+            failedPasswordAttempts = attempts;
+            try {
+                localStorage.setItem(failedPasswordAttemptKey, String(attempts));
+            } catch {
+                // Keep the in-memory counter when browser storage is unavailable.
+            }
+        }
+
         passwordForm.addEventListener("submit", (event) => {
             event.preventDefault();
             if (passwordInput.value === "Futuima") {
@@ -1605,6 +1633,13 @@ UPLINK  STABLE</pre>
             }
 
             passwordError.textContent = "Неверный пароль.";
+            const failedAttempts = getFailedPasswordAttempts();
+            wrongPasswordAudio.src = failedAttempts === 0
+                ? "assets/wrong-password.mp3"
+                : randomWrongPasswordSounds[
+                    Math.floor(Math.random() * randomWrongPasswordSounds.length)
+                ];
+            saveFailedPasswordAttempts(failedAttempts + 1);
             wrongPasswordAudio.currentTime = 0;
             wrongPasswordAudio.play().catch(() => {
                 passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
