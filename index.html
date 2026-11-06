@@ -1137,6 +1137,9 @@ UPLINK  STABLE</pre>
                 <button class="nav-button" type="button" data-shape="triangle">
                     <span class="nav-icon" aria-hidden="true">△</span> Trójkąt
                 </button>
+                <button class="nav-button" type="button" data-shape="roots">
+                    <span class="nav-icon" aria-hidden="true">√</span> Pierwiastki
+                </button>
                 <button class="nav-button" type="button" data-shape="circle">
                     <span class="nav-icon" aria-hidden="true">◯</span> Koło
                 </button>
@@ -1233,6 +1236,20 @@ UPLINK  STABLE</pre>
                         </label>
                         <label for="triangle-h">Wysokość h (cm)
                             <input id="triangle-h" name="h" type="number" min="0.000001" step="any" required disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="roots" hidden>
+                    <div class="fields">
+                        <label for="roots-a">Współczynnik a
+                            <input id="roots-a" name="a" type="number" step="any" required disabled>
+                        </label>
+                        <label for="roots-b">Współczynnik b
+                            <input id="roots-b" name="b" type="number" step="any" required disabled>
+                        </label>
+                        <label for="roots-c">Współczynnik c
+                            <input id="roots-c" name="c" type="number" step="any" required disabled>
                         </label>
                     </div>
                 </div>
@@ -1705,6 +1722,14 @@ UPLINK  STABLE</pre>
                     perimeter: a + b + c
                 })
             },
+            roots: {
+                title: 'Pierwiastki <span>równania</span>',
+                hint: "Podaj współczynniki a, b i c równania ax² + bx + c = 0.",
+                formula: "DELTA = b² − 4ac  |  Dla a = 0 równanie jest liniowe",
+                areaLabel: "x₁",
+                perimeterLabel: "x₂",
+                calculate: () => null
+            },
             circle: {
                 title: 'Pole i obwód <span>koła</span>',
                 hint: "Podaj promień r koła (w centymetrach). Wynik używa liczby π.",
@@ -1881,6 +1906,76 @@ UPLINK  STABLE</pre>
                     Number(input.value)
                 ])
             );
+
+            if (currentShape === "roots") {
+                const { a, b, c } = dimensions;
+                if (![a, b, c].every(Number.isFinite)) {
+                    error.textContent = "Wprowadź poprawne wartości współczynników.";
+                    error.hidden = false;
+                    results.hidden = true;
+                    return;
+                }
+
+                const noSecondRoot = "—";
+                const formatRoot = (value) => format.format(value);
+                const showRangeError = () => {
+                    error.textContent = "Wynik jest poza zakresem. Zmniejsz podane wartości.";
+                    error.hidden = false;
+                    results.hidden = true;
+                };
+                const setRootValues = (first, second = null) => {
+                    if (!Number.isFinite(first) || (second !== null && !Number.isFinite(second))) {
+                        showRangeError();
+                        return false;
+                    }
+
+                    areaOutput.textContent = formatRoot(first);
+                    perimeterOutput.textContent = second === null ? noSecondRoot : formatRoot(second);
+                    return true;
+                };
+                if (a === 0) {
+                    if (b === 0) {
+                        areaOutput.textContent = c === 0
+                            ? "Nieskończenie wiele rozwiązań"
+                            : "Brak rozwiązań";
+                        perimeterOutput.textContent = noSecondRoot;
+                    } else {
+                        if (!setRootValues(-c / b)) {
+                            return;
+                        }
+                    }
+                } else {
+                    const discriminant = b ** 2 - 4 * a * c;
+                    if (!Number.isFinite(discriminant)) {
+                        showRangeError();
+                        return;
+                    }
+                    if (discriminant > 0) {
+                        const squareRoot = Math.sqrt(discriminant);
+                        if (!setRootValues((-b - squareRoot) / (2 * a), (-b + squareRoot) / (2 * a))) {
+                            return;
+                        }
+                    } else if (discriminant === 0) {
+                        if (!setRootValues(-b / (2 * a))) {
+                            return;
+                        }
+                    } else {
+                        const realValue = -b / (2 * a);
+                        const imaginaryValue = Math.sqrt(-discriminant) / (2 * Math.abs(a));
+                        if (![realValue, imaginaryValue].every(Number.isFinite)) {
+                            showRangeError();
+                            return;
+                        }
+                        const realPart = formatRoot(realValue);
+                        const imaginaryPart = formatRoot(imaginaryValue);
+                        areaOutput.textContent = `${realPart} + ${imaginaryPart}i`;
+                        perimeterOutput.textContent = `${realPart} − ${imaginaryPart}i`;
+                    }
+                }
+
+                results.hidden = false;
+                return;
+            }
 
             if (Object.values(dimensions).some((value) => !Number.isFinite(value) || value <= 0)) {
                 error.textContent = "Wprowadź poprawne liczby większe od zera.";
