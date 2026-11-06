@@ -895,7 +895,8 @@
         }
 
         input,
-        select {
+        select,
+        textarea {
             width: 100%;
             min-height: 46px;
             padding: 0.65rem 0.75rem;
@@ -908,13 +909,21 @@
             transition: border-color 150ms ease, box-shadow 150ms ease;
         }
 
+        textarea {
+            min-height: 7rem;
+            resize: vertical;
+            font: inherit;
+        }
+
         input:hover,
-        select:hover {
+        select:hover,
+        textarea:hover {
             border-color: rgb(91 255 71 / 55%);
         }
 
         input:focus-visible,
-        select:focus-visible {
+        select:focus-visible,
+        textarea:focus-visible {
             border-color: var(--green);
             box-shadow: 0 0 0 3px rgb(57 255 20 / 12%), 0 0 18px rgb(57 255 20 / 9%);
         }
@@ -1102,8 +1111,6 @@
             <button type="submit">Войти</button>
             <p class="password-error" id="password-error" role="alert" aria-live="assertive"></p>
             <button id="polite-entry" type="button" hidden>Пожалуйста, впустите меня на сайт</button>
-            <audio id="wrong-password-audio" src="assets/wrong-password.mp3" preload="auto"></audio>
-            <audio id="site-entry-audio" src="assets/acolytewhat3.mp3" preload="auto"></audio>
         </form>
     </section>
 
@@ -1174,6 +1181,15 @@ UPLINK  STABLE</pre>
                 </button>
                 <button class="nav-button" type="button" data-shape="arrays">
                     <span class="nav-icon" aria-hidden="true">[ ]</span> Generator tablic
+                </button>
+                <button class="nav-button" type="button" data-shape="maximum">
+                    <span class="nav-icon" aria-hidden="true">↑</span> Maksimum listy
+                </button>
+                <button class="nav-button" type="button" data-shape="minimum">
+                    <span class="nav-icon" aria-hidden="true">↓</span> Minimum listy
+                </button>
+                <button class="nav-button" type="button" data-shape="average">
+                    <span class="nav-icon" aria-hidden="true">x̄</span> Średnia arytmetyczna
                 </button>
             </nav>
             <p class="side-status"><span class="status-dot"></span>SYSTEM ONLINE</p>
@@ -1368,11 +1384,33 @@ UPLINK  STABLE</pre>
                     </div>
                 </div>
 
+                <div class="calculator" data-calculator="maximum" hidden>
+                    <div class="fields">
+                        <label for="maximum-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
+                            <textarea id="maximum-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="minimum" hidden>
+                    <div class="fields">
+                        <label for="minimum-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
+                            <textarea id="minimum-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="calculator" data-calculator="average" hidden>
+                    <div class="fields">
+                        <label for="average-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
+                            <textarea id="average-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                        </label>
+                    </div>
+                </div>
+
                 <button class="calculate" type="submit">[ OBLICZ WYNIKI ]</button>
             </form>
 
-            <audio id="calculation-audio" src="assets/delo-sdelano.mp3" preload="auto"></audio>
-            <audio id="empty-input-audio" src="assets/necromancernogold1.mp3" preload="auto"></audio>
             <p id="error" role="alert" hidden></p>
             <section id="array-output" class="array-output" aria-live="polite" hidden>
                 <div class="array-output-header">
@@ -1396,12 +1434,12 @@ UPLINK  STABLE</pre>
         </main>
     </div>
 
+    <audio id="site-audio" src="assets/acolytewhat3.mp3" preload="auto"></audio>
+
     <div class="reaction-overlay" id="reaction-overlay" role="dialog" aria-modal="true" aria-label="Реакция на текст в числовом поле" hidden>
         <div class="reaction-dialog">
             <button class="reaction-close" id="reaction-close" type="button" aria-label="Закрыть">×</button>
             <img src="assets/numeric-input-reaction.png" alt="Мемная реакция на текст вместо числа">
-            <audio id="reaction-audio" src="assets/numeric-input-reaction.mp3" preload="auto"></audio>
-            <p class="reaction-audio-status" id="reaction-audio-status" role="status" hidden></p>
         </div>
     </div>
 
@@ -1419,8 +1457,6 @@ UPLINK  STABLE</pre>
         const trackList = document.querySelector("#track-list-items");
         const albumSelect = document.querySelector("#album-select");
         const musicArtist = document.querySelector("#music-artist");
-        const reactionAudio = document.querySelector("#reaction-audio");
-        const reactionAudioStatus = document.querySelector("#reaction-audio-status");
         const albums = [
             {
                 title: "Время колокольчиков",
@@ -1670,13 +1706,13 @@ UPLINK  STABLE</pre>
         const passwordInput = document.querySelector("#site-password");
         const passwordError = document.querySelector("#password-error");
         const politeEntryButton = document.querySelector("#polite-entry");
-        const wrongPasswordAudio = document.querySelector("#wrong-password-audio");
-        const siteEntryAudio = document.querySelector("#site-entry-audio");
-        const calculationAudio = document.querySelector("#calculation-audio");
-        const emptyInputAudio = document.querySelector("#empty-input-audio");
+        const siteAudio = document.querySelector("#site-audio");
         const format = new Intl.NumberFormat("pl-PL", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
+        });
+        const listNumberFormat = new Intl.NumberFormat("pl-PL", {
+            maximumFractionDigits: 15
         });
         const languageNames = {
             javascript: "JAVASCRIPT",
@@ -1685,15 +1721,12 @@ UPLINK  STABLE</pre>
         };
 
         const failedPasswordAttemptKey = "fiutuima-polite-failed-password-attempts-v1";
-        const calculationRecoveryKey = "fiutuima-calculation-recovery-sound";
-        const randomWrongPasswordSounds = [
-            "assets/musor-drop_jkwCGrE.mp3",
-            "assets/distorted-trumpets-hl2.mp3",
-            "assets/00000000000000000.mp3",
-            "assets/skyrim-npc-music-harvest-dawn.mp3"
+        const functionEntrySounds = [
+            "assets/peonwhat4.mp3",
+            "assets/warcraft-3-poslusnik-replik.mp3",
+            "assets/peasantpissed1.mp3"
         ];
         let failedPasswordAttempts = 0;
-        let calculationRecoveryPending = false;
 
         function getFailedPasswordAttempts() {
             try {
@@ -1715,33 +1748,22 @@ UPLINK  STABLE</pre>
             }
         }
 
-        function markCalculationInputError() {
-            calculationRecoveryPending = true;
-            try {
-                localStorage.setItem(calculationRecoveryKey, "true");
-            } catch {
-                // Keep the recovery flag in memory when browser storage is unavailable.
-            }
-        }
-
-        function consumeCalculationInputError() {
-            let isRecovery = calculationRecoveryPending;
-            try {
-                isRecovery = isRecovery || localStorage.getItem(calculationRecoveryKey) === "true";
-                if (isRecovery) {
-                    localStorage.removeItem(calculationRecoveryKey);
-                }
-            } catch {
-                // Use the in-memory recovery flag when browser storage is unavailable.
-            }
-            calculationRecoveryPending = false;
-            return isRecovery;
-        }
-
         function playSiteEntrySound() {
-            siteEntryAudio.currentTime = 0;
-            siteEntryAudio.play().catch(() => {
+            siteAudio.src = "assets/acolytewhat3.mp3";
+            siteAudio.currentTime = 0;
+            siteAudio.play().catch(() => {
                 error.textContent = "Не удалось воспроизвести звук входа.";
+                error.hidden = false;
+            });
+        }
+
+        function playFunctionEntrySound() {
+            siteAudio.src = functionEntrySounds[
+                Math.floor(Math.random() * functionEntrySounds.length)
+            ];
+            siteAudio.currentTime = 0;
+            siteAudio.play().catch(() => {
+                error.textContent = "Не удалось воспроизвести звук раздела.";
                 error.hidden = false;
             });
         }
@@ -1779,36 +1801,8 @@ UPLINK  STABLE</pre>
                 ? "Неверный пароль. Можно попросить впустить вас вежливо."
                 : "Неверный пароль.";
             showPoliteEntryIfAvailable();
-            wrongPasswordAudio.src = failedAttempts === 0
-                ? "assets/wrong-password.mp3"
-                : randomWrongPasswordSounds[
-                    Math.floor(Math.random() * randomWrongPasswordSounds.length)
-                ];
-            wrongPasswordAudio.currentTime = 0;
-            wrongPasswordAudio.play().catch(() => {
-                passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
-            });
             passwordInput.select();
         });
-
-        function playCalculationSound() {
-            calculationAudio.src = consumeCalculationInputError()
-                ? "assets/ooo-a-vot-tak-mne-nravitsja.mp3"
-                : "assets/delo-sdelano.mp3";
-            calculationAudio.currentTime = 0;
-            calculationAudio.play().catch(() => {
-                error.textContent = "Не удалось воспроизвести звук расчёта.";
-                error.hidden = false;
-            });
-        }
-
-        function playEmptyInputSound() {
-            emptyInputAudio.currentTime = 0;
-            emptyInputAudio.play().catch(() => {
-                error.textContent = "Не удалось воспроизвести звук пустого поля.";
-                error.hidden = false;
-            });
-        }
 
         let lastNumericField = null;
 
@@ -1819,20 +1813,10 @@ UPLINK  STABLE</pre>
             lastNumericField = document.activeElement;
             reactionOverlay.hidden = false;
             reactionCloseButton.focus();
-            reactionAudioStatus.hidden = true;
-            reactionAudio.currentTime = 0;
-            reactionAudio.play().catch(() => {
-                if (!reactionOverlay.hidden) {
-                    reactionAudioStatus.textContent = "Не удалось воспроизвести звук.";
-                    reactionAudioStatus.hidden = false;
-                }
-            });
         }
 
         function closeNumericInputReaction() {
             reactionOverlay.hidden = true;
-            reactionAudio.pause();
-            reactionAudio.currentTime = 0;
             if (lastNumericField instanceof HTMLElement) {
                 lastNumericField.focus();
             }
@@ -1954,12 +1938,37 @@ UPLINK  STABLE</pre>
                 areaLabel: "Wynik",
                 perimeterLabel: "Kod",
                 calculate: () => null
+            },
+            maximum: {
+                title: 'Maksymalny <span>element</span>',
+                hint: "Wpisz listę liczb, aby znaleźć największą wartość.",
+                formula: "WYNIK: największa wartość z podanej listy",
+                areaLabel: "Maksimum",
+                perimeterLabel: "Liczba elementów",
+                calculate: () => null
+            },
+            minimum: {
+                title: 'Minimalny <span>element</span>',
+                hint: "Wpisz listę liczb, aby znaleźć najmniejszą wartość.",
+                formula: "WYNIK: najmniejsza wartość z podanej listy",
+                areaLabel: "Minimum",
+                perimeterLabel: "Liczba elementów",
+                calculate: () => null
+            },
+            average: {
+                title: 'Średnia <span>arytmetyczna</span>',
+                hint: "Wpisz listę liczb, aby obliczyć średnią arytmetyczną.",
+                formula: "ŚREDNIA = suma liczb / liczba elementów",
+                areaLabel: "Średnia",
+                perimeterLabel: "Liczba elementów",
+                calculate: () => null
             }
         };
 
         let currentShape = "trapezoid";
 
         function selectShape(shape) {
+            const shouldPlayEntrySound = shape !== currentShape;
             currentShape = shape;
             const config = shapes[shape];
 
@@ -1974,7 +1983,7 @@ UPLINK  STABLE</pre>
             calculators.forEach((calculator) => {
                 const isActive = calculator.dataset.calculator === shape;
                 calculator.hidden = !isActive;
-                calculator.querySelectorAll("input, select").forEach((control) => {
+                calculator.querySelectorAll("input, select, textarea").forEach((control) => {
                     control.disabled = !isActive;
                 });
             });
@@ -1989,6 +1998,9 @@ UPLINK  STABLE</pre>
             error.hidden = true;
             copyStatus.textContent = "";
             updateArrayDimensionFields();
+            if (shouldPlayEntrySound) {
+                playFunctionEntrySound();
+            }
         }
 
         function updateArrayDimensionFields() {
@@ -2004,7 +2016,6 @@ UPLINK  STABLE</pre>
         }
 
         function showCalculationInputError(message) {
-            markCalculationInputError();
             error.textContent = message;
             error.hidden = false;
         }
@@ -2016,22 +2027,6 @@ UPLINK  STABLE</pre>
         arrayDimension.addEventListener("change", updateArrayDimensionFields);
         arrayRandom.addEventListener("change", updateArrayDimensionFields);
         updateArrayDimensionFields();
-
-        let emptyInputSoundQueued = false;
-        form.addEventListener("invalid", (event) => {
-            if (!(event.target instanceof HTMLInputElement)) {
-                return;
-            }
-
-            markCalculationInputError();
-            if (event.target.value === "" && !emptyInputSoundQueued) {
-                emptyInputSoundQueued = true;
-                playEmptyInputSound();
-                setTimeout(() => {
-                    emptyInputSoundQueued = false;
-                }, 0);
-            }
-        }, true);
 
         form.addEventListener("submit", (event) => {
             event.preventDefault();
@@ -2115,7 +2110,39 @@ UPLINK  STABLE</pre>
                 arrayOutput.hidden = false;
                 copyStatus.textContent = "";
                 results.hidden = true;
-                playCalculationSound();
+                return;
+            }
+
+            if (["maximum", "minimum", "average"].includes(currentShape)) {
+                const listInput = activeCalculator.querySelector('textarea[name="numbers"]');
+                const values = listInput.value.trim().split(/[,\s;]+/u).filter(Boolean).map(Number);
+                if (!values.length || values.some((value) => !Number.isFinite(value))) {
+                    showCalculationInputError("Podaj listę poprawnych liczb, oddzielając je przecinkiem, spacją lub średnikiem.");
+                    results.hidden = true;
+                    return;
+                }
+
+                let result;
+                if (currentShape === "maximum") {
+                    result = values.reduce((maximum, value) => Math.max(maximum, value));
+                } else if (currentShape === "minimum") {
+                    result = values.reduce((minimum, value) => Math.min(minimum, value));
+                } else {
+                    const scale = values.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0);
+                    result = scale === 0
+                        ? 0
+                        : values.reduce((sum, value) => sum + value / scale, 0) / values.length * scale;
+                }
+
+                if (!Number.isFinite(result)) {
+                    showCalculationInputError("Nie można obliczyć wyniku dla podanych liczb.");
+                    results.hidden = true;
+                    return;
+                }
+
+                areaOutput.textContent = listNumberFormat.format(result);
+                perimeterOutput.textContent = String(values.length);
+                results.hidden = false;
                 return;
             }
 
@@ -2191,7 +2218,6 @@ UPLINK  STABLE</pre>
                 }
 
                 results.hidden = false;
-                playCalculationSound();
                 return;
             }
 
@@ -2221,7 +2247,6 @@ UPLINK  STABLE</pre>
                     ? `k = ${format.format(ratios[0])}`
                     : `min: ${format.format(ratios[0])} · śr: ${format.format(ratios[1])} · max: ${format.format(ratios[2])}`;
                 results.hidden = false;
-                playCalculationSound();
                 return;
             }
 
@@ -2235,7 +2260,6 @@ UPLINK  STABLE</pre>
             areaOutput.textContent = `${format.format(answer.area)} cm²`;
             perimeterOutput.textContent = `${format.format(answer.perimeter)} cm`;
             results.hidden = false;
-            playCalculationSound();
         });
 
         copyCodeButton.addEventListener("click", async () => {
