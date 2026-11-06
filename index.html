@@ -1015,7 +1015,7 @@
                 grid-template-columns: minmax(0, 1fr);
                 grid-template-rows: auto auto 1fr;
                 gap: 0.8rem;
-                padding: 0.8rem;
+                padding: max(0.65rem, env(safe-area-inset-top)) max(0.65rem, env(safe-area-inset-right)) max(0.65rem, env(safe-area-inset-bottom)) max(0.65rem, env(safe-area-inset-left));
             }
 
             .sidebar {
@@ -1023,6 +1023,14 @@
                 grid-row: 1;
                 min-width: 0;
                 padding: 0.4rem;
+            }
+
+            .content {
+                grid-column: 1;
+                grid-row: 3;
+                width: 100%;
+                margin: 0;
+                padding: clamp(1rem, 4vw, 1.6rem);
             }
 
             .brand {
@@ -1038,8 +1046,8 @@
                 position: static;
                 grid-column: 1;
                 grid-row: 2;
-                justify-self: end;
-                width: min(240px, 100%);
+                justify-self: stretch;
+                width: 100%;
             }
 
             .nav {
@@ -1047,34 +1055,50 @@
                 flex-wrap: nowrap;
                 overflow-x: auto;
                 justify-content: flex-start;
-                padding-bottom: 0.1rem;
+                gap: 0.45rem;
+                padding: 0.4rem 0.1rem 0.5rem;
+                overscroll-behavior-x: contain;
+                scroll-snap-type: x proximity;
+                -webkit-overflow-scrolling: touch;
             }
 
             .nav-button {
                 width: auto;
+                min-height: 44px;
                 flex: 0 0 auto;
-                padding: 0.55rem 0.7rem;
+                padding: 0.6rem 0.75rem;
                 font-size: 0.76rem;
+                scroll-snap-align: start;
             }
 
             .nav-icon {
                 width: auto;
             }
 
-            .content {
-                grid-column: 1;
-                grid-row: 3;
-                margin: 0;
+            .fields,
+            .triangle-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .calculate {
+                min-height: 52px;
+            }
+
+            input,
+            select,
+            textarea {
+                font-size: 16px;
             }
         }
 
         @media (max-width: 420px) {
-            .fields {
-                grid-template-columns: 1fr;
+            .app {
+                gap: 0.6rem;
             }
 
-            .triangle-columns {
-                grid-template-columns: 1fr;
+            .content {
+                padding: 1rem;
+                border-radius: 10px;
             }
 
             .glitch-backdrop {
@@ -1388,7 +1412,7 @@ UPLINK  STABLE</pre>
                 <div class="calculator" data-calculator="maximum" hidden>
                     <div class="fields">
                         <label for="maximum-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
-                            <textarea id="maximum-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                            <textarea id="maximum-numbers" name="numbers" rows="4" inputmode="decimal" spellcheck="false" placeholder="10, -3, 5.5" required disabled></textarea>
                         </label>
                     </div>
                 </div>
@@ -1396,7 +1420,7 @@ UPLINK  STABLE</pre>
                 <div class="calculator" data-calculator="minimum" hidden>
                     <div class="fields">
                         <label for="minimum-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
-                            <textarea id="minimum-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                            <textarea id="minimum-numbers" name="numbers" rows="4" inputmode="decimal" spellcheck="false" placeholder="10, -3, 5.5" required disabled></textarea>
                         </label>
                     </div>
                 </div>
@@ -1404,7 +1428,7 @@ UPLINK  STABLE</pre>
                 <div class="calculator" data-calculator="average" hidden>
                     <div class="fields">
                         <label for="average-numbers">Lista liczb (oddziel przecinkiem, średnikiem lub spacją; dziesiętne przez kropkę)
-                            <textarea id="average-numbers" name="numbers" rows="4" placeholder="10, -3, 5.5" required disabled></textarea>
+                            <textarea id="average-numbers" name="numbers" rows="4" inputmode="decimal" spellcheck="false" placeholder="10, -3, 5.5" required disabled></textarea>
                         </label>
                     </div>
                 </div>
@@ -1896,6 +1920,33 @@ UPLINK  STABLE</pre>
                 showNumericInputReaction();
             }
         }
+
+        const listNumberCharacterPattern = /[^0-9eE+\-.,;\s]/u;
+        const listNumberTextareas = form.querySelectorAll('textarea[name="numbers"]');
+        listNumberTextareas.forEach((textarea) => {
+            textarea.addEventListener("beforeinput", (event) => {
+                if (event.data && listNumberCharacterPattern.test(event.data)) {
+                    event.preventDefault();
+                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                }
+            });
+
+            textarea.addEventListener("paste", (event) => {
+                const pastedText = event.clipboardData.getData("text");
+                if (listNumberCharacterPattern.test(pastedText)) {
+                    event.preventDefault();
+                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                }
+            });
+
+            textarea.addEventListener("drop", (event) => {
+                const droppedText = event.dataTransfer.getData("text");
+                if (listNumberCharacterPattern.test(droppedText)) {
+                    event.preventDefault();
+                    showCalculationInputError("В списке можно вводить только числа и разделители.");
+                }
+            });
+        });
 
         form.addEventListener("keydown", (event) => {
             if (event.target instanceof HTMLInputElement &&
