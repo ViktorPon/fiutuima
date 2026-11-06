@@ -1103,6 +1103,7 @@
             <p class="password-error" id="password-error" role="alert" aria-live="assertive"></p>
             <button id="polite-entry" type="button" hidden>Пожалуйста, впустите меня на сайт</button>
             <audio id="wrong-password-audio" src="assets/wrong-password.mp3" preload="auto"></audio>
+            <audio id="site-entry-audio" src="assets/acolytewhat3.mp3" preload="auto"></audio>
         </form>
     </section>
 
@@ -1371,6 +1372,7 @@ UPLINK  STABLE</pre>
             </form>
 
             <audio id="calculation-audio" src="assets/delo-sdelano.mp3" preload="auto"></audio>
+            <audio id="empty-input-audio" src="assets/necromancernogold1.mp3" preload="auto"></audio>
             <p id="error" role="alert" hidden></p>
             <section id="array-output" class="array-output" aria-live="polite" hidden>
                 <div class="array-output-header">
@@ -1669,7 +1671,9 @@ UPLINK  STABLE</pre>
         const passwordError = document.querySelector("#password-error");
         const politeEntryButton = document.querySelector("#polite-entry");
         const wrongPasswordAudio = document.querySelector("#wrong-password-audio");
+        const siteEntryAudio = document.querySelector("#site-entry-audio");
         const calculationAudio = document.querySelector("#calculation-audio");
+        const emptyInputAudio = document.querySelector("#empty-input-audio");
         const format = new Intl.NumberFormat("pl-PL", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -1680,7 +1684,8 @@ UPLINK  STABLE</pre>
             cpp: "C++"
         };
 
-        const failedPasswordAttemptKey = "fiutuima-failed-password-attempts";
+        const failedPasswordAttemptKey = "fiutuima-polite-failed-password-attempts-v1";
+        const calculationRecoveryKey = "fiutuima-calculation-recovery-sound";
         const randomWrongPasswordSounds = [
             "assets/musor-drop_jkwCGrE.mp3",
             "assets/distorted-trumpets-hl2.mp3",
@@ -1688,6 +1693,7 @@ UPLINK  STABLE</pre>
             "assets/skyrim-npc-music-harvest-dawn.mp3"
         ];
         let failedPasswordAttempts = 0;
+        let calculationRecoveryPending = false;
 
         function getFailedPasswordAttempts() {
             try {
@@ -1709,6 +1715,45 @@ UPLINK  STABLE</pre>
             }
         }
 
+        function markCalculationInputError() {
+            calculationRecoveryPending = true;
+            try {
+                localStorage.setItem(calculationRecoveryKey, "true");
+            } catch {
+                // Keep the recovery flag in memory when browser storage is unavailable.
+            }
+        }
+
+        function consumeCalculationInputError() {
+            let isRecovery = calculationRecoveryPending;
+            try {
+                isRecovery = isRecovery || localStorage.getItem(calculationRecoveryKey) === "true";
+                if (isRecovery) {
+                    localStorage.removeItem(calculationRecoveryKey);
+                }
+            } catch {
+                // Use the in-memory recovery flag when browser storage is unavailable.
+            }
+            calculationRecoveryPending = false;
+            return isRecovery;
+        }
+
+        function playSiteEntrySound() {
+            siteEntryAudio.currentTime = 0;
+            siteEntryAudio.play().catch(() => {
+                error.textContent = "Не удалось воспроизвести звук входа.";
+                error.hidden = false;
+            });
+        }
+
+        function enterSite() {
+            passwordGate.hidden = true;
+            passwordError.textContent = "";
+            politeEntryButton.hidden = true;
+            saveFailedPasswordAttempts(0);
+            playSiteEntrySound();
+        }
+
         function showPoliteEntryIfAvailable() {
             if (getFailedPasswordAttempts() >= 3) {
                 politeEntryButton.hidden = false;
@@ -1718,15 +1763,13 @@ UPLINK  STABLE</pre>
 
         showPoliteEntryIfAvailable();
         politeEntryButton.addEventListener("click", () => {
-            passwordGate.hidden = true;
-            passwordError.textContent = "";
+            enterSite();
         });
 
         passwordForm.addEventListener("submit", (event) => {
             event.preventDefault();
             if (passwordInput.value === "Futuima") {
-                passwordGate.hidden = true;
-                passwordError.textContent = "";
+                enterSite();
                 return;
             }
 
@@ -1749,9 +1792,20 @@ UPLINK  STABLE</pre>
         });
 
         function playCalculationSound() {
+            calculationAudio.src = consumeCalculationInputError()
+                ? "assets/ooo-a-vot-tak-mne-nravitsja.mp3"
+                : "assets/delo-sdelano.mp3";
             calculationAudio.currentTime = 0;
             calculationAudio.play().catch(() => {
                 error.textContent = "Не удалось воспроизвести звук расчёта.";
+                error.hidden = false;
+            });
+        }
+
+        function playEmptyInputSound() {
+            emptyInputAudio.currentTime = 0;
+            emptyInputAudio.play().catch(() => {
+                error.textContent = "Не удалось воспроизвести звук пустого поля.";
                 error.hidden = false;
             });
         }
@@ -1949,6 +2003,12 @@ UPLINK  STABLE</pre>
             arrayMax.required = arrayRandom.checked;
         }
 
+        function showCalculationInputError(message) {
+            markCalculationInputError();
+            error.textContent = message;
+            error.hidden = false;
+        }
+
         navButtons.forEach((button) => {
             button.addEventListener("click", () => selectShape(button.dataset.shape));
         });
@@ -1956,6 +2016,22 @@ UPLINK  STABLE</pre>
         arrayDimension.addEventListener("change", updateArrayDimensionFields);
         arrayRandom.addEventListener("change", updateArrayDimensionFields);
         updateArrayDimensionFields();
+
+        let emptyInputSoundQueued = false;
+        form.addEventListener("invalid", (event) => {
+            if (!(event.target instanceof HTMLInputElement)) {
+                return;
+            }
+
+            markCalculationInputError();
+            if (event.target.value === "" && !emptyInputSoundQueued) {
+                emptyInputSoundQueued = true;
+                playEmptyInputSound();
+                setTimeout(() => {
+                    emptyInputSoundQueued = false;
+                }, 0);
+            }
+        }, true);
 
         form.addEventListener("submit", (event) => {
             event.preventDefault();
@@ -1974,8 +2050,7 @@ UPLINK  STABLE</pre>
 
                 if (!Number.isInteger(length) || length < 1 || length > 1000 ||
                     (isTwoDimensional && (!Number.isInteger(columns) || columns < 1 || columns > 1000))) {
-                    error.textContent = "Podaj całkowite rozmiary tablic od 1 do 1000.";
-                    error.hidden = false;
+                    showCalculationInputError("Podaj całkowite rozmiary tablic od 1 do 1000.");
                     arrayOutput.hidden = true;
                     return;
                 }
@@ -1984,8 +2059,7 @@ UPLINK  STABLE</pre>
                     !Number.isInteger(minValue) || !Number.isInteger(maxValue) ||
                     minValue < -1000000 || maxValue > 1000000 || minValue > maxValue
                 )) {
-                    error.textContent = "Podaj całkowite granice losowania od -1000000 do 1000000; wartość „od” nie może być większa niż „do”.";
-                    error.hidden = false;
+                    showCalculationInputError("Podaj całkowite granice losowania od -1000000 do 1000000; wartość „od” nie może być większa niż „do”.");
                     arrayOutput.hidden = true;
                     return;
                 }
@@ -2055,8 +2129,7 @@ UPLINK  STABLE</pre>
             if (currentShape === "roots") {
                 const { a, b, c } = dimensions;
                 if (![a, b, c].every(Number.isFinite)) {
-                    error.textContent = "Wprowadź poprawne wartości współczynników.";
-                    error.hidden = false;
+                    showCalculationInputError("Wprowadź poprawne wartości współczynników.");
                     results.hidden = true;
                     return;
                 }
@@ -2064,8 +2137,7 @@ UPLINK  STABLE</pre>
                 const noSecondRoot = "—";
                 const formatRoot = (value) => format.format(value);
                 const showRangeError = () => {
-                    error.textContent = "Wynik jest poza zakresem. Zmniejsz podane wartości.";
-                    error.hidden = false;
+                    showCalculationInputError("Wynik jest poza zakresem. Zmniejsz podane wartości.");
                     results.hidden = true;
                 };
                 const setRootValues = (first, second = null) => {
@@ -2124,8 +2196,7 @@ UPLINK  STABLE</pre>
             }
 
             if (Object.values(dimensions).some((value) => !Number.isFinite(value) || value <= 0)) {
-                error.textContent = "Wprowadź poprawne liczby większe od zera.";
-                error.hidden = false;
+                showCalculationInputError("Wprowadź poprawne liczby większe od zera.");
                 results.hidden = true;
                 return;
             }
@@ -2136,8 +2207,7 @@ UPLINK  STABLE</pre>
                 const isTriangle = ([a, b, c]) => a + b > c && a + c > b && b + c > a;
 
                 if (!isTriangle(first) || !isTriangle(second)) {
-                    error.textContent = "Podane boki muszą tworzyć dwa poprawne trójkąty.";
-                    error.hidden = false;
+                    showCalculationInputError("Podane boki muszą tworzyć dwa poprawne trójkąty.");
                     results.hidden = true;
                     return;
                 }
@@ -2157,8 +2227,7 @@ UPLINK  STABLE</pre>
 
             const answer = shapes[currentShape].calculate(dimensions);
             if (Object.values(answer).some((value) => !Number.isFinite(value))) {
-                error.textContent = "Wynik jest poza zakresem. Zmniejsz podane wartości.";
-                error.hidden = false;
+                showCalculationInputError("Wynik jest poza zakresem. Zmniejsz podane wartości.");
                 results.hidden = true;
                 return;
             }
