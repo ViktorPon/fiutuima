@@ -1620,8 +1620,17 @@ UPLINK  STABLE</pre>
 
         renderTrackList();
 
+        let soundcloudWidget = null;
+        let soundcloudPlaying = false;
+
+        function pauseSoundCloudMusic() {
+            if (soundcloudWidget && soundcloudPlaying) {
+                soundcloudWidget.pause();
+            }
+        }
+
         if (window.SC && soundcloudFrame) {
-            const soundcloudWidget = window.SC.Widget(soundcloudFrame);
+            soundcloudWidget = window.SC.Widget(soundcloudFrame);
             let trackCount = 0;
             let trackDuration = 0;
             const initialVolume = getSavedVolume();
@@ -1733,10 +1742,18 @@ UPLINK  STABLE</pre>
             });
 
             soundcloudWidget.bind(window.SC.Widget.Events.PLAY, () => {
+                soundcloudPlaying = true;
+                document.querySelectorAll("#site-audio, #wrong-password-audio, #calculation-audio, #empty-input-audio, #reaction-audio").forEach((audio) => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
                 updatePlayButton(true);
                 updateTrackInfo();
             });
-            soundcloudWidget.bind(window.SC.Widget.Events.PAUSE, () => updatePlayButton(false));
+            soundcloudWidget.bind(window.SC.Widget.Events.PAUSE, () => {
+                soundcloudPlaying = false;
+                updatePlayButton(false);
+            });
             soundcloudWidget.bind(window.SC.Widget.Events.PLAY_PROGRESS, (progress) => {
                 const position = progress.currentPosition;
                 const duration = progress.duration || trackDuration;
@@ -1902,6 +1919,9 @@ UPLINK  STABLE</pre>
         }
 
         function playSiteEntrySound() {
+            if (soundcloudPlaying) {
+                return;
+            }
             siteAudio.src = "assets/acolytewhat3.mp3";
             siteAudio.currentTime = 0;
             siteAudio.play().catch(() => {
@@ -1911,6 +1931,9 @@ UPLINK  STABLE</pre>
         }
 
         function playFunctionEntrySound() {
+            if (soundcloudPlaying) {
+                return;
+            }
             siteAudio.src = functionEntrySounds[
                 Math.floor(Math.random() * functionEntrySounds.length)
             ];
@@ -1922,6 +1945,10 @@ UPLINK  STABLE</pre>
         }
 
         function playCalculationSound() {
+            if (soundcloudPlaying) {
+                consumeCalculationInputError();
+                return;
+            }
             calculationAudio.src = consumeCalculationInputError()
                 ? "assets/ooo-a-vot-tak-mne-nravitsja.mp3"
                 : "assets/delo-sdelano.mp3";
@@ -1933,6 +1960,9 @@ UPLINK  STABLE</pre>
         }
 
         function playEmptyInputSound() {
+            if (soundcloudPlaying) {
+                return;
+            }
             emptyInputAudio.currentTime = 0;
             emptyInputAudio.play().catch(() => {
                 error.textContent = "Не удалось воспроизвести звук пустого поля.";
@@ -1973,6 +2003,10 @@ UPLINK  STABLE</pre>
                 ? "Неверный пароль. Можно попросить впустить вас вежливо."
                 : "Неверный пароль.";
             showPoliteEntryIfAvailable();
+            if (soundcloudPlaying) {
+                passwordInput.select();
+                return;
+            }
             wrongPasswordAudio.currentTime = 0;
             wrongPasswordAudio.play().catch(() => {
                 passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
@@ -1986,6 +2020,7 @@ UPLINK  STABLE</pre>
             if (!reactionOverlay.hidden) {
                 return;
             }
+            pauseSoundCloudMusic();
             lastNumericField = document.activeElement;
             reactionOverlay.hidden = false;
             reactionCloseButton.focus();
