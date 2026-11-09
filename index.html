@@ -1667,10 +1667,22 @@ UPLINK  STABLE</pre>
                 return "Название недоступно";
             }
 
-            function renderLoadedTrackList(count) {
-                renderTrackList(count, (index) => {
-                    soundcloudWidget.skip(index);
-                    soundcloudWidget.play();
+            function renderLoadedTrackList(sounds) {
+                trackList.replaceChildren();
+                sounds.forEach((sound, index) => {
+                    const item = document.createElement("li");
+                    const button = document.createElement("button");
+                    const title = getSoundTitle(sound, index);
+                    button.className = "track-list-button";
+                    button.type = "button";
+                    button.textContent = `${index + 1}. ${title}`;
+                    button.title = button.textContent;
+                    button.addEventListener("click", () => {
+                        soundcloudWidget.skip(index);
+                        soundcloudWidget.play();
+                    });
+                    item.append(button);
+                    trackList.append(item);
                 });
             }
 
@@ -1724,7 +1736,7 @@ UPLINK  STABLE</pre>
                 soundcloudWidget.getSounds((sounds) => {
                     trackCount = sounds.length;
                     if (trackCount > 0) {
-                        renderLoadedTrackList(trackCount);
+                        renderLoadedTrackList(sounds);
                         previousTrackButton.disabled = false;
                         nextTrackButton.disabled = trackCount < 2;
                         playButton.disabled = false;
