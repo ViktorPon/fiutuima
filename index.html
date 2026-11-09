@@ -508,6 +508,57 @@
             box-shadow: 0 0 8px rgb(57 255 20 / 55%);
         }
 
+        .music-volume {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) 2.2rem;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0 0.7rem 0.5rem;
+        }
+
+        .music-volume-icon,
+        .music-volume-value {
+            color: var(--green-dim);
+            font-size: 0.62rem;
+        }
+
+        .music-volume-value {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .music-volume input[type="range"] {
+            width: 100%;
+            height: 4px;
+            min-height: 4px;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            outline: none;
+            background: linear-gradient(90deg, var(--green) 70%, #17351a 70%);
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .music-volume input[type="range"]::-webkit-slider-thumb {
+            width: 10px;
+            height: 10px;
+            border: 0;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgb(57 255 20 / 55%);
+            appearance: none;
+        }
+
+        .music-volume input[type="range"]::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            border: 0;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgb(57 255 20 / 55%);
+        }
+
         .track-position {
             display: block;
             overflow: hidden;
@@ -1250,6 +1301,11 @@ UPLINK  STABLE</pre>
                 <input id="music-seek" type="range" min="0" max="100" value="0" aria-label="Позиция воспроизведения" disabled>
                 <span class="music-time" id="music-duration">0:00</span>
             </div>
+            <label class="music-volume" for="music-volume">
+                <span class="music-volume-icon" aria-hidden="true">🔊</span>
+                <input id="music-volume" type="range" min="0" max="100" value="70" aria-label="Громкость плеера">
+                <span class="music-volume-value" id="music-volume-value">70%</span>
+            </label>
             <span class="track-position" id="track-position" aria-live="polite">Загрузка треков…</span>
             <details class="track-list" id="track-list">
                 <summary>Выбрать трек</summary>
@@ -1481,6 +1537,8 @@ UPLINK  STABLE</pre>
         const nextTrackButton = document.querySelector("#track-next");
         const playButton = document.querySelector("#track-play");
         const seekBar = document.querySelector("#music-seek");
+        const volumeBar = document.querySelector("#music-volume");
+        const volumeValue = document.querySelector("#music-volume-value");
         const currentTimeLabel = document.querySelector("#music-current-time");
         const durationLabel = document.querySelector("#music-duration");
         const trackList = document.querySelector("#track-list-items");
@@ -1517,6 +1575,25 @@ UPLINK  STABLE</pre>
         ];
         let currentAlbumIndex = 0;
         let playlistTitles = albums[currentAlbumIndex].tracks;
+        const volumeStorageKey = "fiutuima-soundcloud-volume-v1";
+
+        function getSavedVolume() {
+            try {
+                const savedVolume = Number(localStorage.getItem(volumeStorageKey));
+                return Number.isFinite(savedVolume) ? Math.min(100, Math.max(0, savedVolume)) : 70;
+            } catch {
+                return 70;
+            }
+        }
+
+        function updateVolumeDisplay(volume) {
+            const normalizedVolume = Math.min(100, Math.max(0, Number(volume) || 0));
+            volumeBar.value = String(normalizedVolume);
+            volumeValue.textContent = `${normalizedVolume}%`;
+            volumeBar.style.background = `linear-gradient(90deg, var(--green) ${normalizedVolume}%, #17351a ${normalizedVolume}%)`;
+        }
+
+        updateVolumeDisplay(getSavedVolume());
 
         function formatMusicTime(milliseconds) {
             const totalSeconds = Math.floor(milliseconds / 1000);
@@ -1547,6 +1624,18 @@ UPLINK  STABLE</pre>
             const soundcloudWidget = window.SC.Widget(soundcloudFrame);
             let trackCount = 0;
             let trackDuration = 0;
+            const initialVolume = getSavedVolume();
+
+            function setPlayerVolume(volume) {
+                const normalizedVolume = Math.min(100, Math.max(0, Number(volume) || 0));
+                updateVolumeDisplay(normalizedVolume);
+                try {
+                    localStorage.setItem(volumeStorageKey, String(normalizedVolume));
+                } catch {
+                    // Keep the current volume when browser storage is unavailable.
+                }
+                soundcloudWidget.setVolume(normalizedVolume);
+            }
 
             function getSoundTitle(sound, index) {
                 if (playlistTitles[index]) {
@@ -1639,6 +1728,9 @@ UPLINK  STABLE</pre>
             }
 
             soundcloudWidget.bind(window.SC.Widget.Events.READY, updateLoadedAlbum);
+            soundcloudWidget.bind(window.SC.Widget.Events.READY, () => {
+                setPlayerVolume(initialVolume);
+            });
 
             soundcloudWidget.bind(window.SC.Widget.Events.PLAY, () => {
                 updatePlayButton(true);
@@ -1699,8 +1791,10 @@ UPLINK  STABLE</pre>
                 });
             });
             seekBar.addEventListener("input", () => soundcloudWidget.seekTo(Number(seekBar.value)));
+            volumeBar.addEventListener("input", () => setPlayerVolume(volumeBar.value));
         } else {
             trackPosition.textContent = "Переключение недоступно";
+            volumeBar.disabled = true;
         }
 
         const form = document.querySelector("#calculator-form");
