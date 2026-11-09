@@ -675,6 +675,27 @@
             text-align: center;
         }
 
+        .failure-overlay {
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .failure-overlay[hidden] {
+            display: none;
+        }
+
+        .failure-overlay img {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+        }
+
         .reaction-close {
             position: absolute;
             top: 0.85rem;
@@ -1528,6 +1549,13 @@ UPLINK  STABLE</pre>
         </div>
     </div>
 
+    <div class="failure-overlay" id="failure-overlay" role="alertdialog" aria-modal="true" aria-label="Системная ошибка" hidden>
+        <img src="assets/failure-overlay.png" alt="">
+        <audio id="failure-three-audio" src="assets/zaika-davai.mp3" preload="auto"></audio>
+        <audio id="failure-warning-audio" src="assets/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-e-lutador.mp3" preload="auto"></audio>
+        <audio id="failure-final-audio" src="assets/backrooms.mp3" preload="auto"></audio>
+    </div>
+
     <script src="https://w.soundcloud.com/player/api.js"></script>
     <script>
         const soundcloudFrame = document.querySelector("#soundcloud-frame");
@@ -1755,10 +1783,7 @@ UPLINK  STABLE</pre>
 
             soundcloudWidget.bind(window.SC.Widget.Events.PLAY, () => {
                 soundcloudPlaying = true;
-                document.querySelectorAll("#site-audio, #wrong-password-audio, #calculation-audio, #empty-input-audio, #reaction-audio").forEach((audio) => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                });
+                stopLocalSounds();
                 updatePlayButton(true);
                 updateTrackInfo();
             });
@@ -1864,6 +1889,10 @@ UPLINK  STABLE</pre>
         const siteAudio = document.querySelector("#site-audio");
         const calculationAudio = document.querySelector("#calculation-audio");
         const emptyInputAudio = document.querySelector("#empty-input-audio");
+        const failureOverlay = document.querySelector("#failure-overlay");
+        const failureThreeAudio = document.querySelector("#failure-three-audio");
+        const failureWarningAudio = document.querySelector("#failure-warning-audio");
+        const failureFinalAudio = document.querySelector("#failure-final-audio");
         const format = new Intl.NumberFormat("pl-PL", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -1886,6 +1915,8 @@ UPLINK  STABLE</pre>
         ];
         let failedPasswordAttempts = 0;
         let calculationRecoveryPending = false;
+        let escalationFailureCount = 0;
+        let failureModeActive = false;
 
         function getFailedPasswordAttempts() {
             try {
@@ -1928,6 +1959,69 @@ UPLINK  STABLE</pre>
             }
             calculationRecoveryPending = false;
             return isRecovery;
+        }
+
+        function stopLocalSounds() {
+            document.querySelectorAll("#site-audio, #wrong-password-audio, #calculation-audio, #empty-input-audio, #reaction-audio").forEach((audio) => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+        }
+
+        function playEscalationAudio(audio) {
+            if (soundcloudPlaying || failureModeActive) {
+                return;
+            }
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        }
+
+        function blockFailureModeInteraction(event) {
+            if (failureModeActive) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+
+        function activateFailureMode() {
+            if (failureModeActive) {
+                return;
+            }
+
+            failureModeActive = true;
+            pauseSoundCloudMusic();
+            stopLocalSounds();
+            document.body.style.background = "#000";
+            document.documentElement.style.background = "#000";
+            document.documentElement.style.overflow = "hidden";
+            failureOverlay.hidden = false;
+            document.addEventListener("keydown", blockFailureModeInteraction, true);
+            document.addEventListener("pointerdown", blockFailureModeInteraction, true);
+            failureWarningAudio.currentTime = 0;
+            failureFinalAudio.currentTime = 0;
+            failureWarningAudio.addEventListener("ended", () => {
+                failureFinalAudio.currentTime = 0;
+                failureFinalAudio.play().catch(() => {});
+            }, { once: true });
+            failureFinalAudio.addEventListener("ended", () => {
+                window.location.replace("about:blank");
+            }, { once: true });
+            failureWarningAudio.play().catch(() => {});
+        }
+
+        function registerInputFailure() {
+            if (failureModeActive) {
+                return;
+            }
+
+            escalationFailureCount += 1;
+            if (escalationFailureCount === 3) {
+                playEscalationAudio(failureThreeAudio);
+            } else if (escalationFailureCount === 5) {
+                playEscalationAudio(failureWarningAudio);
+            } else if (escalationFailureCount >= 7) {
+                activateFailureMode();
+            }
         }
 
         function playSiteEntrySound() {
@@ -2011,6 +2105,10 @@ UPLINK  STABLE</pre>
 
             const failedAttempts = getFailedPasswordAttempts();
             saveFailedPasswordAttempts(failedAttempts + 1);
+            registerInputFailure();
+            if (failureModeActive) {
+                return;
+            }
             passwordError.textContent = failedAttempts + 1 >= 3
                 ? "Неверный пароль. Можно попросить впустить вас вежливо."
                 : "Неверный пароль.";
@@ -2056,6 +2154,10 @@ UPLINK  STABLE</pre>
         }
 
         function confirmNumericInputReaction() {
+            registerInputFailure();
+            if (failureModeActive) {
+                return;
+            }
             if (reactionOverlay.hidden &&
                 window.confirm("Ты уверен, что хочешь ввести текст вместо числа?")) {
                 showNumericInputReaction();
@@ -2299,7 +2401,10 @@ UPLINK  STABLE</pre>
             markCalculationInputError();
             if (event.target.value === "" && !emptyInputSoundQueued) {
                 emptyInputSoundQueued = true;
-                playEmptyInputSound();
+                registerInputFailure();
+                if (!failureModeActive) {
+                    playEmptyInputSound();
+                }
                 setTimeout(() => {
                     emptyInputSoundQueued = false;
                 }, 0);
