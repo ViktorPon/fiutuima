@@ -1962,9 +1962,19 @@ UPLINK  STABLE</pre>
         }
 
         function stopLocalSounds() {
-            document.querySelectorAll("#site-audio, #wrong-password-audio, #calculation-audio, #empty-input-audio, #reaction-audio").forEach((audio) => {
+            document.querySelectorAll("audio").forEach((audio) => {
                 audio.pause();
                 audio.currentTime = 0;
+            });
+        }
+
+        function playLocalSound(audio, onError = null) {
+            stopLocalSounds();
+            audio.currentTime = 0;
+            audio.play().catch(() => {
+                if (onError) {
+                    onError();
+                }
             });
         }
 
@@ -1972,9 +1982,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying || failureModeActive) {
                 return;
             }
-            stopLocalSounds();
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
+            playLocalSound(audio);
         }
 
         function blockFailureModeInteraction(event) {
@@ -2007,7 +2015,7 @@ UPLINK  STABLE</pre>
             failureFinalAudio.addEventListener("ended", () => {
                 window.location.replace("about:blank");
             }, { once: true });
-            failureWarningAudio.play().catch(() => {});
+            playLocalSound(failureWarningAudio);
         }
 
         function registerInputFailure() {
@@ -2029,10 +2037,8 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
-            stopLocalSounds();
             siteAudio.src = "assets/acolytewhat3.mp3";
-            siteAudio.currentTime = 0;
-            siteAudio.play().catch(() => {
+            playLocalSound(siteAudio, () => {
                 error.textContent = "Не удалось воспроизвести звук входа.";
                 error.hidden = false;
             });
@@ -2042,12 +2048,10 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
-            stopLocalSounds();
             siteAudio.src = functionEntrySounds[
                 Math.floor(Math.random() * functionEntrySounds.length)
             ];
-            siteAudio.currentTime = 0;
-            siteAudio.play().catch(() => {
+            playLocalSound(siteAudio, () => {
                 error.textContent = "Не удалось воспроизвести звук раздела.";
                 error.hidden = false;
             });
@@ -2058,12 +2062,10 @@ UPLINK  STABLE</pre>
                 consumeCalculationInputError();
                 return;
             }
-            stopLocalSounds();
             calculationAudio.src = consumeCalculationInputError()
                 ? "assets/ooo-a-vot-tak-mne-nravitsja.mp3"
                 : "assets/delo-sdelano.mp3";
-            calculationAudio.currentTime = 0;
-            calculationAudio.play().catch(() => {
+            playLocalSound(calculationAudio, () => {
                 error.textContent = "Не удалось воспроизвести звук расчёта.";
                 error.hidden = false;
             });
@@ -2073,9 +2075,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
-            stopLocalSounds();
-            emptyInputAudio.currentTime = 0;
-            emptyInputAudio.play().catch(() => {
+            playLocalSound(emptyInputAudio, () => {
                 error.textContent = "Не удалось воспроизвести звук пустого поля.";
                 error.hidden = false;
             });
@@ -2122,9 +2122,7 @@ UPLINK  STABLE</pre>
                 passwordInput.select();
                 return;
             }
-            stopLocalSounds();
-            wrongPasswordAudio.currentTime = 0;
-            wrongPasswordAudio.play().catch(() => {
+            playLocalSound(wrongPasswordAudio, () => {
                 passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
             });
             passwordInput.select();
@@ -2141,8 +2139,7 @@ UPLINK  STABLE</pre>
             reactionOverlay.hidden = false;
             reactionCloseButton.focus();
             reactionAudioStatus.hidden = true;
-            reactionAudio.currentTime = 0;
-            reactionAudio.play().catch(() => {
+            playLocalSound(reactionAudio, () => {
                 if (!reactionOverlay.hidden) {
                     reactionAudioStatus.textContent = "Не удалось воспроизвести звук.";
                     reactionAudioStatus.hidden = false;
@@ -2166,7 +2163,6 @@ UPLINK  STABLE</pre>
             }
             if (reactionOverlay.hidden &&
                 window.confirm("Ты уверен, что хочешь ввести текст вместо числа?")) {
-                stopLocalSounds();
                 showNumericInputReaction();
             }
         }
