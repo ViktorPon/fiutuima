@@ -1972,6 +1972,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying || failureModeActive) {
                 return;
             }
+            stopLocalSounds();
             audio.currentTime = 0;
             audio.play().catch(() => {});
         }
@@ -2028,6 +2029,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
+            stopLocalSounds();
             siteAudio.src = "assets/acolytewhat3.mp3";
             siteAudio.currentTime = 0;
             siteAudio.play().catch(() => {
@@ -2040,6 +2042,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
+            stopLocalSounds();
             siteAudio.src = functionEntrySounds[
                 Math.floor(Math.random() * functionEntrySounds.length)
             ];
@@ -2055,6 +2058,7 @@ UPLINK  STABLE</pre>
                 consumeCalculationInputError();
                 return;
             }
+            stopLocalSounds();
             calculationAudio.src = consumeCalculationInputError()
                 ? "assets/ooo-a-vot-tak-mne-nravitsja.mp3"
                 : "assets/delo-sdelano.mp3";
@@ -2069,6 +2073,7 @@ UPLINK  STABLE</pre>
             if (soundcloudPlaying) {
                 return;
             }
+            stopLocalSounds();
             emptyInputAudio.currentTime = 0;
             emptyInputAudio.play().catch(() => {
                 error.textContent = "Не удалось воспроизвести звук пустого поля.";
@@ -2117,6 +2122,7 @@ UPLINK  STABLE</pre>
                 passwordInput.select();
                 return;
             }
+            stopLocalSounds();
             wrongPasswordAudio.currentTime = 0;
             wrongPasswordAudio.play().catch(() => {
                 passwordError.textContent = "Неверный пароль. Не удалось воспроизвести звук.";
@@ -2160,6 +2166,7 @@ UPLINK  STABLE</pre>
             }
             if (reactionOverlay.hidden &&
                 window.confirm("Ты уверен, что хочешь ввести текст вместо числа?")) {
+                stopLocalSounds();
                 showNumericInputReaction();
             }
         }
